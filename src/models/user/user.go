@@ -1,4 +1,4 @@
-package user
+﻿package user
 
 import(
 	"time"
@@ -20,7 +20,7 @@ type User struct {
 	Follower_count 	int64			`json:"Follower_count" bson:"Follower_count"`//关注我的人数（粉丝）
 	Following_count int64			`json:"Following_count" bson:"Following_count"`	//我关注的人数
 	Browse_count    int64			`json:"Browse_count" bson:"Browse_count"`//浏览数（文章 ）
-	Article_count   int64			`json:"Article_count" bson:"Article_count"` //发表文章数
+	Article_count   int64			`json:"Article_count" bson:"Article_count"` //发表文章数  
 	Describe	    string	 	    `json:"Describe"   	   bson:"Describe"`//个人介绍
 	Profile_image_url	 string	    `json:"Profile_image_url"   	   bson:"Profile_image_url"`//头像地址
 	LastLogin		time.Time 		`json:"LastLogin"   bson:"LastLogin"` //最后登录时间
