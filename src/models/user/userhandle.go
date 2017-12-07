@@ -6,13 +6,17 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"time"
 	"gopkg.in/mgo.v2"
-	"github.com/syndtr/goleveldb/leveldb/errors"
+	"github.com/garyburd/redigo/redis"
+	//"github.com/syndtr/goleveldb/leveldb/errors"
+	"flag"
+	"fmt"
 )
 
+
 func UserRegister(nickName,phone,password string) (uid string) {
-	var user *User = new(User)
+	var user *	User = new(User)
 	user.Uid          = bson.NewObjectId()
-	user.NickName     = nickName
+	user.Name     = nickName
 	user.Phone    	  = phone
 	user.PassWord     = password
 	user.RegisterDate = time.Now()
@@ -27,24 +31,72 @@ func UserRegister(nickName,phone,password string) (uid string) {
 	}
 	return user.Uid.Hex()
 }
-//
 
-func UserLogin(phone,password string)(user []*User,err error){
+//用户登录
+func UserLogin(phone,password string)(user *User,s string){
+	var users []*User
 
+	//根据手机号判断是否注册
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Phone":phone,"password":password}).All(&user)
+		return c.Find(bson.M{"Phone":phone}).All(&users)
+	}
+	err := com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("User-UserLogin1: %s\n", err)
+	}
+
+	if len(users)<1{
+		return nil,"该手机尚未注册"
+	}
+
+
+    //校验密码准确性
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"Phone":phone,"password":password}).All(&users)
 
 	}
 
 	err = com.GetCollection("User",query)
 	if err != nil{
-		log.Fatalf("User-UserLogin: %s\n", err)
+		log.Fatalf("User-UserLogin2: %s\n", err)
 	}
 
-	if len(user)<1{
-		return nil,errors.New("用户不存在")
-	}else {
-		return user,nil
+
+	if len(users)<1{
+		return nil,"账号或密码错误"
+	}else{
+		return users[0],""
 	}
 
+}
+
+//存在redis
+func AddSession(user *User){
+
+	flag.Parse()
+	pool := com.RedigoPool(*com.Host, *com.Password)
+
+	conn := pool.Get() //从连接池获取连接
+	defer conn.Close() //用完后放回连接池
+
+	myuser := map[string]*User{
+		user.Uid.Hex():&User{Uid:user.Uid,Name:user.Name,Phone:user.Phone,PassWord:user.PassWord,RegisterDate:user.RegisterDate},
+	}
+
+
+
+	//保存Map
+	for sym, row := range myuser {
+		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
+			log.Fatal(err)
+		}
+	}
+	//20分钟缓存时间
+	value, err := conn.Do("EXPIRE", user.Uid.Hex(),1800)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(value)//返回ok
 }

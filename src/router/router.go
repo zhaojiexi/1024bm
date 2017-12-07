@@ -3,11 +3,13 @@ package router
 import (
 	"fmt"
 	"net/http"
-	user "models/user"
 	"github.com/gin-gonic/gin"
-	"com"
 	"log"
 	//"github.com/golang/net/html/atom"
+	//"gopkg.in/mgo.v2/bson"
+	"models/user"
+
+
 )
 
 //用户路由
@@ -39,7 +41,7 @@ func GetUserInfo(c *gin.Context){
 	if !exist {
 		value = "CaiMin"
 	}
-	com.AddSession("testsession","zjx","123")
+
 	c.Data(http.StatusOK, "text/plain", []byte(fmt.Sprintf("ok! %s\n", value)))
 	return
 }
@@ -53,19 +55,20 @@ func UserLogin(c *gin.Context){
 
 	u,err:=user.UserLogin(phone,password)
 
-	if  err!=nil{
-		checkERR(err)
-	}
-
-	//用户存在
-	if len(u)>0 {
+	//用户不存在 或 账号密码错误 返回界面提示用户信息
+	if u==nil {
 		//user:=u[0]
-
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":err})
 
 	}
+	//验证成功放入缓存
 
-	c.JSON(http.StatusOK,u[0])
+	user.AddSession(u)
 
+
+
+
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"登录成功"})
 
 }
 

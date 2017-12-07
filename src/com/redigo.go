@@ -6,15 +6,18 @@ import (
 	"flag"
 	"time"
 	"github.com/garyburd/redigo/redis"
+	//"models/user"
+
 )
+
 
 var (
 	pool *redis.Pool
-	host = flag.String("106.75.13.30", "106.75.13.30:6379", "")
+	Host = flag.String("106.75.13.30", "106.75.13.30:6379", "")
 	/*
 	redis设置了AUTH安全验证才需要passd,一般普通写法为c, err := redis.Dial("tcp", "127.0.0.1:6379")
 	*/
-	password = flag.String("passwd", "Zxcasdqwe123!@#", "")
+	Password = flag.String("passwd", "Zxcasdqwe123!@#", "")
 )
 
 const redigoSession string = "redigoSessionId"
@@ -90,7 +93,7 @@ func RedigoPool(host, passwd string) *redis.Pool {
 //累加计数,每执行一次加(自增长)
 func SetCount(countKey string){
 	flag.Parse()
-	pool = RedigoPool(*host, *password)
+	pool = RedigoPool(*Host, *Password)
 
 	conn := pool.Get()//从连接池获取连接
 	defer conn.Close()//用完后放回连接池
@@ -114,7 +117,7 @@ func SetCount(countKey string){
 
 func SetMap() {
 	flag.Parse()
-	pool = RedigoPool(*host, *password)
+	pool = RedigoPool(*Host, *Password)
 
 	conn := pool.Get() //从连接池获取连接
 	defer conn.Close() //用完后放回连接池
@@ -149,7 +152,7 @@ func SetMap() {
 
 func SetInfo() {
 	flag.Parse()
-	pool = RedigoPool(*host, *password)
+	pool = RedigoPool(*Host, *Password)
 
 	conn := pool.Get()//从连接池获取连接
 	defer conn.Close()//用完后放回连接池
@@ -173,29 +176,33 @@ func SetInfo() {
 
 }
 
-func AddSession(sessionId,name,mobile string){
-	flag.Parse()
-	pool = RedigoPool(*host, *password)
 
-	conn := pool.Get() //从连接池获取连接
-	defer conn.Close() //用完后放回连接池
-
-	myuser := map[string]*MyUser{
-		sessionId: &MyUser{UserName: name, UserPhone: mobile},
-	}
-
-	//保存Map
-	for sym, row := range myuser {
-		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	value, err := conn.Do("EXPIRE", sessionId,1800)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println(value)//返回ok
-}
+//func AddSession(user user.User){
+//
+//	flag.Parse()
+//	pool = RedigoPool(*host, *password)
+//
+//	conn := pool.Get() //从连接池获取连接
+//	defer conn.Close() //用完后放回连接池
+//
+//	myuser := map[string]*user.User{
+//		user.Uid.Hex():&user.User{user.Uid,user.NickName,user.Phone,user.PassWord,user.RegisterDate},
+//	}
+//
+//
+//
+//	//保存Map
+//	for sym, row := range myuser {
+//		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
+//			log.Fatal(err)
+//		}
+//	}
+//
+//	value, err := conn.Do("EXPIRE", user.Uid.Hex(),1800)
+//	if err != nil {
+//		fmt.Println(err)
+//		return
+//	}
+//
+//	fmt.Println(value)//返回ok
+//}
