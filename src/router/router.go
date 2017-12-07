@@ -8,9 +8,7 @@ import (
 	//"github.com/golang/net/html/atom"
 	//"gopkg.in/mgo.v2/bson"
 	"models/user"
-
-
-)
+	)
 
 //用户路由
 func SetUserRouter(router *gin.Engine) *gin.Engine {
