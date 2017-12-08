@@ -7,8 +7,7 @@ import (
 	//"gopkg.in/mgo.v2/bson"
 	"models/user"
 
-)
-
+	)
 //用户路由
 func SetUserRouter(router *gin.Engine) *gin.Engine {
 	userRoutert := router.Group("api/v1/")
