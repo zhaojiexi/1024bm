@@ -12,10 +12,10 @@ import (
 )
 
 //用户注册
-func UserRegister(nickName,phone,password string) (user1 *User,result string) {
+func UserRegister(name,phone,password string) (user1 *User,result string) {
 
 	//验证用户输入
-	if len(nickName)<1{
+	if len(name)<1{
 		return nil,"用户名长度小于1"
 	}
 	if len(phone)<1{
@@ -30,7 +30,7 @@ func UserRegister(nickName,phone,password string) (user1 *User,result string) {
 	//验证用户是否存在
 	query := func(c *mgo.Collection) (error) {
 
-		return c.Find(bson.M{"Phone":phone}).All(&ulist)
+		return c.Find(bson.M{"Name":name}).All(&ulist)
 
 	}
 
@@ -39,18 +39,36 @@ func UserRegister(nickName,phone,password string) (user1 *User,result string) {
 		log.Fatalf("User-UserRegister时报错: %s\n", err)
 	}
 	//如果存在 直接返回
-	if len(ulist)>1 {
+	if len(ulist)>0 {
+		return nil,"该用户名已存在"
+	}
+
+
+	//验证手机是否存在
+	query = func(c *mgo.Collection) (error) {
+
+		return c.Find(bson.M{"Phone":phone}).All(&ulist)
+
+	}
+
+	err = com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("User-UserRegister时报错: %s\n", err)
+	}
+	//如果存在 直接返回
+	if len(ulist)>0 {
 		return nil,"该手机已被注册"
 	}
 
 
+
 	var user *User = new(User)
 	user.Uid          = bson.NewObjectId().Hex()
-	user.Name    	  = nickName
+	user.Name    	  = name
 	user.Phone    	  = phone
 	user.PassWord     = password
 	user.RegisterDate = time.Now()
-	user.Slug		  =user.Uid+nickName
+	user.Slug		  =user.Uid+name
 	user.Location		=""
 	user.University		=""
 	user.Company		=""
@@ -73,6 +91,9 @@ func UserRegister(nickName,phone,password string) (user1 *User,result string) {
 	if err != nil{
 		log.Fatalf("User-UserRegister时报错: %s\n", err)
 	}
+	//注册成功 放入缓存
+	AddSession(user)
+
 	return user,""
 }
 
@@ -96,7 +117,7 @@ func UserLogin(phone,password string)(user *User,s string){
 
     //校验密码准确性
 	query = func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Phone":phone,"password":password}).All(&users)
+		return c.Find(bson.M{"Phone":phone,"PassWord":password}).All(&users)
 
 	}
 
@@ -109,6 +130,8 @@ func UserLogin(phone,password string)(user *User,s string){
 	if len(users)<1{
 		return nil,"账号或密码错误"
 	}else{
+		//注册成功 放入缓存
+		AddSession(users[0])
 		return users[0],""
 	}
 

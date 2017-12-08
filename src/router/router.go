@@ -37,8 +37,7 @@ func UserRegister(c *gin.Context) {
 	}else if ur!=nil{
 
 		result=gin.H{"code":200,"msg":1,"start":1,"text":"注册成功"}
-		//注册成功 放入redis缓存
-		user.AddSession(ur)
+
 	}
 
 	c.JSON(http.StatusOK,result)
@@ -84,14 +83,13 @@ func UserLogin(c *gin.Context){
 	if u==nil {
 		//user:=u[0]
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":err})
-
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"登录成功"})
 	}
-	//验证成功放入缓存
-
-	user.AddSession(u)
 
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"登录成功"})
+
+
 
 }
 
