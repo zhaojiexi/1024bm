@@ -1,14 +1,11 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"log"
 	//"github.com/golang/net/html/atom"
 	//"gopkg.in/mgo.v2/bson"
 	"models/user"
-
 
 )
 
@@ -20,7 +17,7 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.POST("user/register",UserRegister) //用户注册，如：http://0.0.0.0:8888/user/register 提交服务端参数在工具中创建
 		userRoutert.GET("user/uid/:id",GetUserInfo)   //根据uid获取用户信息，如：http://0.0.0.0:8888/user/uid/5a167c7265b39931c4c57861
 		userRoutert.POST("user/login",UserLogin)                 //用户登录,如：http://0.0.0.0:8000/user/login?name=caimin&password=123qwe
-		//userRoutert.GET("list",GetUsers)                   //获取用户列表,如：
+		userRoutert.GET("user/list",GetUsers)                   //获取用户列表,如：
 	}
 	return router
 }
@@ -30,19 +27,48 @@ func UserRegister(c *gin.Context) {
 	_name := c.PostForm("name")
 	_phone := c.PostForm("phone")
 	_password := c.PostForm("password")
+	var result gin.H
+
+
+	//根据输入值 判断用户信息是否存在
+	ur,err:=user.UserRegister(_name,_phone,_password)
+
+	if ur==nil{
+		result=gin.H{"code":400,"msg":1,"start":0,"text":err}
+	}else if ur!=nil{
+
+		result=gin.H{"code":200,"msg":1,"start":1,"text":"注册成功"}
+		//注册成功 放入redis缓存
+		user.AddSession(ur)
+	}
+
+	c.JSON(http.StatusOK,result)
+
+
 
 	//c.Data(http.StatusOK, "text/plain", []byte(fmt.Sprintf("注册完成 %s\n", _name, " ", _phone, " ", _password)))
-	c.JSON(http.StatusOK, user.UserRegister(_name,_phone,_password))
+
 }
 
 //获取用户信息
 func GetUserInfo(c *gin.Context){
-	value, exist := c.GetQuery("id")
-	if !exist {
-		value = "CaiMin"
+
+	var result gin.H
+
+	uid:= c.Param("id")
+
+	ur,r:=user.GetUserInfo(uid)
+
+	//如果为nil 返回错误信息
+	if ur==nil {
+		result=gin.H{"code":400,"msg":1,"start":0,"text":r}
+	}else {
+		result=gin.H{"code":400,"msg":1,"start":0,"text":"success","UserInfo":ur}
 	}
 
-	c.Data(http.StatusOK, "text/plain", []byte(fmt.Sprintf("ok! %s\n", value)))
+	c.JSON(http.StatusOK,result)
+
+
 	return
 }
 
@@ -66,14 +92,20 @@ func UserLogin(c *gin.Context){
 	user.AddSession(u)
 
 
-
-
 	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"登录成功"})
 
 }
 
-func checkERR(err error){
-	if err!=nil {
-		log.Fatal(err)
-	}
+//获取用户列表
+func GetUsers(c *gin.Context){
+
+
+	ulist,_:=user.GetUsers()
+
+
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":" ","user":ulist})
+
+
 }
+
+

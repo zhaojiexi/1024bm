@@ -7,7 +7,7 @@ import(
 
 type User struct {
 	_ID			 	bson.ObjectId 	`json:"_ID"            bson:"_ID"`			//记录id
-	Uid 		 	bson.ObjectId 	`json:"Uid"            bson:"Uid"`           //用户id
+	Uid 		 	string		 	`json:"Uid"            bson:"Uid"`           //用户id
 	Name 	 	 	string 			`json:"Name"    	   bson:"Name"`     		 //用户名、昵称
 	Slug 		 	string 			`json:"Slug"    	   bson:"Slug"`     		 //昵称+唯一编号
 	Phone 		 	string 			`json:"Phone"          bson:"Phone"`    		//手机
