@@ -221,7 +221,7 @@ func GetUsers()([]User,error){
 }
 
 //修改用户信息
-func UserInfo(user *User)(string){
+func UpdateUserInfo(user *User)(string){
 
 
 	//根据uid去查找用户，然后修改用户信息
@@ -243,9 +243,7 @@ func UserInfo(user *User)(string){
 	}
 
 // 判断用户输入值是否为空 否 则修改数据
-	if user.Gender!=""{
-		ulist[0].Gender=user.Gender//性别
-	}
+
 	if user.Describe!=""{
 		ulist[0].Describe=user.Describe//个人介绍
 	}
@@ -267,7 +265,9 @@ func UserInfo(user *User)(string){
 	if user.Profile_image_url!=""{
 		ulist[0].Profile_image_url=user.Profile_image_url//展示网站
 	}
+
 	ulist[0].LastLogin=user.LastLogin
+	ulist[0].Gender=user.Gender//性别
 
 /*	ulist[0].Gender=user.Gender//性别
 	ulist[0].Location=user.Location	//所在地
@@ -303,3 +303,40 @@ func UserInfo(user *User)(string){
 
 	return ""
 }
+
+//修改密码
+
+func UpdateUserPassWord(user *User)string{
+
+	var ulist []User
+
+	//先判断用户是否存在
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"Uid":user.Uid}).All(&ulist)
+	}
+
+	err := com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("getUsers: %s\n", err)
+	}
+	if len(ulist)<1 {
+		return "用户不存在"
+		
+	}
+
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Update(bson.M{"Uid":user.Uid},bson.M{"$set":bson.M{
+			"PassWord":user.PassWord,
+		}})
+	}
+
+	err = com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("getUsers: %s\n", err)
+	}
+
+
+	return ""
+}
+

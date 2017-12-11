@@ -26,7 +26,7 @@ type User struct {
 	LastLogin		time.Time 		`json:"LastLogin"   bson:"LastLogin"` //最后登录时间
 	Interest		[]Interest		`json:"Interest" bson:"Interest"`//感兴趣（多选）
 	IsEnabled	    int64			`json:"IsEnabled" bson:"IsEnabled"`//是否可用 （1可用 0不可用）
-	Gender			string			`json:"Gender" bson:"Gender"`//性别 （male男 female女）
+	Gender			int64			`json:"Gender" bson:"Gender"`//性别 （male男 female女）
 }
 
 type Interest struct{

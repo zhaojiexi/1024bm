@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+	"fmt"
+	"strconv"
 )
 //用户路由
 func SetUserRouter(router *gin.Engine) *gin.Engine {
@@ -18,6 +20,7 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.POST("user/login",UserLogin)                 //用户登录,如：http://0.0.0.0:8000/user/login?name=caimin&password=123qwe
 		userRoutert.GET("user/list",GetUsers)                   //获取用户列表,如：http://0.0.0.0:8000/api/v1/user/list
 		userRoutert.POST("user/userinfo",UserInfo)                 //修改用户信息,以表单的形式接受 如：http://0.0.0.0:8000/user/userinfo 提交服务端参数在工具中创建
+		userRoutert.POST("user/updatepwd",UpdateUserPassWord)	  //修改用户密码,以表单的形式接受 如：http://0.0.0.0:8000/user/updatepwd 提交服务端参数在工具中创建
 		}
 	return router
 }
@@ -120,7 +123,16 @@ func UserInfo (c *gin.Context){
 	Interest:=c.PostForm("Interest")
 	json.Unmarshal([]byte(Interest),&u)
 
-	u.Gender=c.PostForm("Gender")
+	g:=c.PostForm("Gender")
+
+	if g!=""{
+		u.Gender,_=strconv.ParseInt(g,10,64)
+	}else {
+		u.Gender=3	//标记一下 表示字段取查询出来的数据
+	}
+
+
+	fmt.Println("gender",g)
 	u.Uid=c.PostForm("Uid")	//用户id
 	u.Describe=c.PostForm("Describe")	//个人介绍
 	u.Location=c.PostForm("Location")	//所在地
@@ -142,7 +154,7 @@ func UserInfo (c *gin.Context){
 	}
 
 
-	result:=user.UserInfo(&u)
+	result:=user.UpdateUserInfo(&u)
 	//如果返回值不为“” 则错误 返回错误信息
 	if result!="" {
 		//user:=u[0]
@@ -151,7 +163,25 @@ func UserInfo (c *gin.Context){
 		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"修改成功"})
 	}
 
-	c.JSON(http.StatusOK,result)
+
+}
+
+//修改用户密码 表单形式 根据uid修改密码
+func UpdateUserPassWord(c *gin.Context){
+
+	var u user.User
+	u.Uid=c.PostForm("Uid")
+	u.PassWord=c.PostForm("PassWord")
+
+	result:=user.UpdateUserPassWord(&u)
+
+	if result!="" {
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"修改成功"})
+	}
+
+
 
 }
 
