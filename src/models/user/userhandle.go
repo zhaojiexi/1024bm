@@ -137,7 +137,7 @@ func UserLogin(phone,password string)(user *User,s string){
 
 }
 
-//存在redis
+//redis缓存整个用户信息
 func AddSession(user *User){
 
 	flag.Parse()
@@ -150,7 +150,11 @@ func AddSession(user *User){
 	myuser := map[string]*User{
 
 
-		user.Uid:&User{Uid:user.Uid,Name:user.Name,Phone:user.Phone,PassWord:user.PassWord,RegisterDate:user.RegisterDate},
+		user.Uid:&User{user._ID,user.Uid,user.Name,user.Slug,user.Phone,
+		user.PassWord,user.RegisterDate,user.Location,user.University,
+		user.Company,user.WebSite,user.Follower_count,user.Following_count,
+		user.Browse_count,user.Article_count,user.Describe,user.Profile_image_url,
+		user.LastLogin,user.Interest,user.IsEnabled,user.Gender},
 	}
 
 
@@ -214,4 +218,88 @@ func GetUsers()([]User,error){
 	return users,err
 
 
+}
+
+//修改用户信息
+func UserInfo(user *User)(string){
+
+
+	//根据uid去查找用户，然后修改用户信息
+
+	var ulist []User
+
+	query := func(c *mgo.Collection) (error) {
+
+		return c.Find(bson.M{"Uid":user.Uid}).All(&ulist)
+
+	}
+	err := com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("User-UserInfo: %s\n", err)
+	}
+	//
+	if len(ulist)<1 {
+		return "用户不存在"
+	}
+
+// 判断用户输入值是否为空 否 则修改数据
+	if user.Gender!=""{
+		ulist[0].Gender=user.Gender//性别
+	}
+	if user.Describe!=""{
+		ulist[0].Describe=user.Describe//个人介绍
+	}
+	if user.Location!=""{
+		ulist[0].Location=user.Location//所在地
+	}
+	if user.Company!=""{
+		ulist[0].Company=user.Company//公司
+	}
+	if user.University!=""{
+		ulist[0].University=user.University//学习
+	}
+	if user.Interest!=nil{
+		ulist[0].Interest=user.Interest//兴趣
+	}
+	if user.WebSite!=""{
+		ulist[0].WebSite=user.WebSite//展示网站
+	}
+	if user.Profile_image_url!=""{
+		ulist[0].Profile_image_url=user.Profile_image_url//展示网站
+	}
+	ulist[0].LastLogin=user.LastLogin
+
+/*	ulist[0].Gender=user.Gender//性别
+	ulist[0].Location=user.Location	//所在地
+	ulist[0].Company=user.Company	//公司
+	ulist[0].University=user.University//学习
+	ulist[0].Interest=user.Interest//兴趣
+	ulist[0].WebSite=user.WebSite	//展示网站
+	ulist[0].Profile_image_url=user.Profile_image_url	//头像地址
+	*/
+
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Update(bson.M{"Uid":ulist[0].Uid},bson.M{"$set":bson.M{
+			"Gender":ulist[0].Gender,
+			"Describe":ulist[0].Describe,
+			"Location":ulist[0].Location,
+			"Company":ulist[0].Company,
+			"University":ulist[0].University,
+			"Interest":ulist[0].Interest,
+			"WebSite":ulist[0].WebSite,
+			"Profile_image_url":ulist[0].Profile_image_url,
+			"LastLogin":ulist[0].LastLogin,
+
+		}})
+	}
+
+	err = com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("User-UserInfo时报错: %s\n", err)
+	}
+
+	AddSession(&ulist[0])//缓存用户信息
+
+	return ""
 }
