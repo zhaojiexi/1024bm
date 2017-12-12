@@ -340,3 +340,63 @@ func UpdateUserPassWord(user *User)string{
 	return ""
 }
 
+//根据关注人的id Following_UID 获取粉丝
+func GetFollows(uid string)([]User,string){
+
+	//判断传入的 Following_UID 是否存在
+
+	var follows []Follow
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"Following_UID":uid}).All(&follows)
+	}
+
+	err := com.GetCollection("Follow",query)
+	if err != nil{
+		log.Fatalf("getUsers: %s\n", err)
+	}
+	if len(follows)<1 {
+		return nil,"用户不存在"
+	}
+
+
+
+	// 根据关注表 获取用户信息 再用一个总的用户数组保存 并返回
+	var users []User
+	var usersAll []User
+
+	fmt.Println("len",len(follows))
+	for   i:=0;i<len(follows) ;i++  {
+		fmt.Println("uid",follows[i].User_UID)
+
+		query = func(c *mgo.Collection) (error) {
+			return c.Find(bson.M{"Uid":follows[i].User_UID}).All(&users)
+		}
+		err= com.GetCollection("User",query)
+		if err != nil{
+			log.Fatalf("GetFollows: %s\n", err)
+		}
+
+		usersAll=append(usersAll,users[0] )
+
+
+	}
+	fmt.Println(usersAll)
+
+
+	return usersAll,""
+}
+
+//新增关注
+func AddFollow (fo Follow){
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Insert(fo)
+	}
+
+	err := com.GetCollection("Follow",query)
+	if err != nil{
+		log.Fatalf("User-UserRegister时报错: %s\n", err)
+	}
+
+}

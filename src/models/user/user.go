@@ -34,6 +34,15 @@ type Interest struct{
 	SubCategory string		`json:"SubCategory"            bson:"SubCategory"`			//子分类名称
 }
 
+type Follow struct {
+	_id		string			`json:"_ID"          bson:"_ID"`					//记录id
+	User_UID	string		`json:"User_UID"     bson:"User_UID"`			//用户id（我）
+	User_name	string		`json:"User_name"    bson:"User_name"`		//用户名
+	Following_UID	string	`json:"Following_UID" bson:"Following_UID"`		//关注的人id
+	Following_Name	string	`json:"Following_Name"          bson:"Following_Name"`		//关注的人名
+	Created	time.Time		`json:"Created"      bson:"Created"`			//创建时间（关注时间）
+	IsEnabled	int64		`json:"IsEnabled"    bson:"IsEnabled"`		//是否可用 （1可用 0不可用）
+}
 
 
 
