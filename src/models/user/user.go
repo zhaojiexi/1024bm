@@ -4,9 +4,10 @@ import(
 	"time"
 	"gopkg.in/mgo.v2/bson"
 )
-
+//用户信息
 type User struct {
-	_ID			 	bson.ObjectId 	`json:"_ID"            bson:"_ID"`			//记录id
+
+	_ID	bson.ObjectId `json:"_ID" bson:"_ID"`//记录id
 	Uid 		 	string		 	`json:"Uid"            bson:"Uid"`           //用户id
 	Name 	 	 	string 			`json:"Name" bson:"Name"`     		 //用户名、昵称
 	Slug 		 	string 			`json:"Slug"      bson:"Slug"`     		 //昵称+唯一编号
@@ -33,9 +34,9 @@ type Interest struct{
 	SubCategoryID string   	`json:"SubCategoryID"          bson:"SubCategoryID"`		//子分类ID
 	SubCategory string		`json:"SubCategory"            bson:"SubCategory"`			//子分类名称
 }
-
+//关注
 type Follow struct {
-	_id		string			`json:"_ID"          bson:"_ID"`					//记录id
+	_ID			string			`json:"_ID"            bson:"_ID"`						//记录id
 	User_UID	string		`json:"User_UID"     bson:"User_UID"`			//用户id（我）
 	User_name	string		`json:"User_name"    bson:"User_name"`		//用户名
 	Following_UID	string	`json:"Following_UID" bson:"Following_UID"`		//关注的人id
@@ -44,6 +45,18 @@ type Follow struct {
 	IsEnabled	int64		`json:"IsEnabled"    bson:"IsEnabled"`		//是否可用 （1可用 0不可用）
 }
 
+//收藏
+type Favorite struct{
+	_ID	 		string		`json:"_ID" 	bson:"_ID"`//记录id
+	User_UID	string 		`json:"User_UID"          bson:"User_UID"`//收藏人id
+	Article_ID 	string		`json:"Article_ID"          bson:"Article_ID"`//文章id
+	Article_Title	string	`json:"Article_Title"          bson:"Article_Title"`//标题
+	Article_Author	string	`json:"Article_Author"          bson:"Article_Author"`//作者
+	Author_Picture	string	`json:"Author_Picture"          bson:"Author_Picture"`//作者头像
+	Article_Time	time.Time	`json:"Article_Time"          bson:"Article_Time"`	//发表时间
+	Created			string	`json:"Created"          bson:"Created"`//创建时间（收藏时间）
+	IsEnabled		int64	`json:"IsEnabled"          bson:"IsEnabled"`//是否可用 （1可用 0不可用）
+}
 
 
 

@@ -21,9 +21,10 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.GET("user/list",GetUsers)                   //获取用户列表,如：http://0.0.0.0:8000/api/v1/user/list
 		userRoutert.POST("user/userinfo",UserInfo)                 //修改用户信息,以表单的形式接受 如：http://0.0.0.0:8000/user/userinfo 提交服务端参数在工具中创建
 		userRoutert.POST("user/updatepwd",UpdateUserPassWord)	  //修改用户密码,以表单的形式接受 如：http://0.0.0.0:8000/user/updatepwd 提交服务端参数在工具中创建
-		userRoutert.GET("user/follows",GetFollows)		//获取所有粉丝  http://0.0.0.0:8000/user/follows?uid=5a167c7265b39931c4c57861
+		userRoutert.GET("user/fans",GetFans)		//获取所有粉丝  http://0.0.0.0:8000/user/follows?uid=5a167c7265b39931c4c57861
 		userRoutert.GET("user/addfollow",AddFollow)		//新增关注 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
-	}
+		userRoutert.GET("user/follows",GetFollows)		//获取所有关注用户 http://0.0.0.0:8000/user/follows?uid=5a2a35f2bfb1481f9cf54c7a
+		}
 	return router
 }
 
@@ -189,10 +190,10 @@ func UpdateUserPassWord(c *gin.Context){
 }
 
 //uid查询所有粉丝
-func GetFollows(c *gin.Context){
+func GetFans(c *gin.Context){
 	uid:=c.Query("Uid")
 
-	u,result:=user.GetFollows(uid)
+	u,result:=user.GetFans(uid)
 
 	//查询失败 返回错误信息 成功 返回成功信息和粉丝详细信息
 	if result!="" {
@@ -214,15 +215,51 @@ func AddFollow(c *gin.Context){
 	fo.Following_UID=c.Query("Following_UID")
 	fo.User_name=c.Query("User_name")
 	fo.Following_Name=c.Query("Following_Name")
-	fo.Created=time.Now()
 
 
-	user.AddFollow(fo)
+
+	formTime:=c.Query("Created")
+	//如果时间不为空 转化为time格式
+	if	formTime!=""{
+		var err error
+		fo.Created,err=time.Parse("2006-01-02 15:04:05", formTime)
+		if err!=nil {
+			log.Fatal(err)
+		}
+	}else{
+		fo.Created=time.Now()
+	}
+
+
+
+	result:=user.AddFollow(&fo)
+
+	if result!="" {
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"新增关注成功"})
+	}
 
 
 
 }
 
+//查看所有关注 根据用户id查看自己的所有关注
+func GetFollows(c *gin.Context){
+
+	uid:=c.Query("uid")
+	ulist,result:=user.GetFollows(uid)
+
+	if result!="" {
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"成功","ulist":ulist})
+	}
+
+
+
+}
 
 
 

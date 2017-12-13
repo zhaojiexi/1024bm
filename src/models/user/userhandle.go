@@ -341,7 +341,7 @@ func UpdateUserPassWord(user *User)string{
 }
 
 //根据关注人的id Following_UID 获取粉丝
-func GetFollows(uid string)([]User,string){
+func GetFans(uid string)([]User,string){
 
 	//判断传入的 Following_UID 是否存在
 
@@ -361,7 +361,7 @@ func GetFollows(uid string)([]User,string){
 
 
 
-	// 根据关注表 获取用户信息 再用一个总的用户数组保存 并返回
+	// 根据关注表 获取用户信息 再用一个总的用户数组保存 并返回所有粉丝
 	var users []User
 	var usersAll []User
 
@@ -388,15 +388,101 @@ func GetFollows(uid string)([]User,string){
 }
 
 //新增关注
-func AddFollow (fo Follow){
+func AddFollow (fo *Follow)string{
 
+	var follows []Follow
+	var users []User
+
+	//校验关注人是否存在
 	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"Uid":fo.Following_UID}).All(&users)
+	}
+
+	err := com.GetCollection("User",query)
+	fmt.Println("User_UID:",fo.User_UID,"Following_UID:",fo.Following_UID)
+	if err != nil{
+		log.Fatalf("User-AddFollow: %s\n", err)
+	}
+	if len(users)<1{
+		return "关注用户id不存在"
+	}
+
+	//校验是否关注
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":fo.User_UID,"Following_UID":fo.Following_UID}).All(&follows)
+	}
+
+	err = com.GetCollection("Follow",query)
+	fmt.Println("User_UID:",fo.User_UID,"Following_UID:",fo.Following_UID)
+	if err != nil{
+		log.Fatalf("User-AddFollow: %s\n", err)
+	}
+	if len(follows)>0{
+		return "不能重复关注"
+	}
+
+
+
+	query = func(c *mgo.Collection) (error) {
 		return c.Insert(fo)
 	}
 
-	err := com.GetCollection("Follow",query)
+	err = com.GetCollection("Follow",query)
 	if err != nil{
-		log.Fatalf("User-UserRegister时报错: %s\n", err)
+		log.Fatalf("User-AddFollow: %s\n", err)
 	}
+	return ""
 
 }
+
+//获取所有关注的用户信息
+func GetFollows(uid string)([]User,string){
+
+	var follows []Follow
+	var users []User
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"Uid":uid}).All(&users)
+	}
+
+	err := com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("Follows: %s\n", err)
+	}
+	if len(users)<1 {
+		return nil,"用户不存在"
+	}
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":uid}).All(&follows)
+	}
+
+	err = com.GetCollection("Follow",query)
+	if err != nil{
+		log.Fatalf("Follows: %s\n", err)
+	}
+
+	var user2 []User
+
+	for  i:=0;i<len(follows) ;i++  {
+
+		query = func(c *mgo.Collection) (error) {
+			return c.Find(bson.M{"Uid":follows[i].Following_UID}).All(&users)
+		}
+
+		err = com.GetCollection("User",query)
+		if err != nil{
+			log.Fatalf("Follows: %s\n", err)
+		}
+		if len(users)>0 {
+			user2=append(user2, users[0])
+		}
+
+	}
+
+
+	fmt.Println(user2)
+	return user2,""
+
+
+}
+
