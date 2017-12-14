@@ -161,11 +161,13 @@ func AddSession(user *User){
 
 	//保存Map
 	for sym, row := range myuser {
+
 		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println(redis.Args{sym}.AddFlat(row))
 	}
-	//20分钟缓存时间
+	//20分钟缓存时间	//根据上面存入的 sym：uid 设置缓存时间
 	value, err := conn.Do("EXPIRE", user.Uid,1800)
 	if err != nil {
 		fmt.Println(err)
@@ -463,6 +465,7 @@ func GetFollows(uid string)([]User,string){
 
 	var user2 []User
 
+	//查询关注的用户详细信息
 	for  i:=0;i<len(follows) ;i++  {
 
 		query = func(c *mgo.Collection) (error) {
@@ -484,5 +487,35 @@ func GetFollows(uid string)([]User,string){
 	return user2,""
 
 
+}
+
+//新增收藏
+func AddFavorite(fr *Favorite)string{
+
+	var frlist []Favorite
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":fr.User_UID,"Article_ID":fr.Article_ID}).All(&frlist)
+	}
+
+	err := com.GetCollection("Favorite",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+	if len(frlist)>0 {
+		return "已关注此文章，请勿重复关注"
+	}
+
+
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Insert(fr)
+	}
+
+	err = com.GetCollection("Favorite",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+	return ""
 }
 

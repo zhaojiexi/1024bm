@@ -15,7 +15,7 @@ var (
 	pool *redis.Pool
 	Host = flag.String("106.75.13.30", "106.75.13.30:6379", "")
 	/*
-	redis设置了AUTH安全验证才需要passwd,一般普通写法为c, err := redis.Dial("tcp", "127.0.0.1:6379")
+	redis设置了AUTH安全验证才需要passd,一般普通写法为c, err := redis.Dial("tcp", "127.0.0.1:6379")
 	*/
 	Password = flag.String("passwd", "Zxcasdqwe123!@#", "")
 )

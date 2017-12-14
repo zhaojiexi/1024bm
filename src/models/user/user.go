@@ -54,7 +54,7 @@ type Favorite struct{
 	Article_Author	string	`json:"Article_Author"          bson:"Article_Author"`//作者
 	Author_Picture	string	`json:"Author_Picture"          bson:"Author_Picture"`//作者头像
 	Article_Time	time.Time	`json:"Article_Time"          bson:"Article_Time"`	//发表时间
-	Created			string	`json:"Created"          bson:"Created"`//创建时间（收藏时间）
+	Created			time.Time	`json:"Created"          bson:"Created"`//创建时间（收藏时间）
 	IsEnabled		int64	`json:"IsEnabled"          bson:"IsEnabled"`//是否可用 （1可用 0不可用）
 }
 

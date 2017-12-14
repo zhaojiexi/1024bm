@@ -1,23 +1,23 @@
 package main
 
 import (
-	"log"
-	"time"
-	"github.com/gin-gonic/gin"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"router"
+	"time"
 )
 
-func main()  {
+func main() {
 	fmt.Println("hello world0000")
 
 	_router := InitRouters()
 	_server := &http.Server{
-		Addr: ":8888",
-		Handler: _router,
-		ReadTimeout: 10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		Addr:           ":8888",
+		Handler:        _router,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
@@ -35,6 +35,3 @@ func InitRouters() *gin.Engine {
 	//router.GET("/login", api.UserLogin) //http://0.0.0.0:8000/user?name=caimin
 	return _initrouter
 }
-
-
-

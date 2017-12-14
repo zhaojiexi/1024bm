@@ -24,6 +24,8 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.GET("user/fans",GetFans)		//获取所有粉丝  http://0.0.0.0:8000/user/follows?uid=5a167c7265b39931c4c57861
 		userRoutert.GET("user/addfollow",AddFollow)		//新增关注 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/follows",GetFollows)		//获取所有关注用户 http://0.0.0.0:8000/user/follows?uid=5a2a35f2bfb1481f9cf54c7a
+		userRoutert.GET("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
+
 		}
 	return router
 }
@@ -131,9 +133,10 @@ func UserInfo (c *gin.Context){
 
 	if g!=""{
 		u.Gender,_=strconv.ParseInt(g,10,64)
-	}else {
-		u.Gender=3	//标记一下 表示字段取查询出来的数据
 	}
+	//else {
+	//	u.Gender=3	//标记一下 表示字段取查询出来的数据
+	//}
 
 
 	fmt.Println("gender",g)
@@ -215,7 +218,7 @@ func AddFollow(c *gin.Context){
 	fo.Following_UID=c.Query("Following_UID")
 	fo.User_name=c.Query("User_name")
 	fo.Following_Name=c.Query("Following_Name")
-
+	fo.IsEnabled=1
 
 
 	formTime:=c.Query("Created")
@@ -257,6 +260,56 @@ func GetFollows(c *gin.Context){
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"成功","ulist":ulist})
 	}
 
+
+
+}
+
+//新增收藏
+func AddFavorite(c *gin.Context){
+
+	var fr user.Favorite
+
+	fr.User_UID=c.Query("User_UID")
+	fr.Article_ID=c.Query("Article_ID")
+	fr.Article_Title=c.Query("Article_Title")
+	fr.Article_Author=c.Query("Article_Author")
+	fr.Author_Picture=c.Query("Author_Picture")
+
+	fr.IsEnabled=1
+
+	formTime:=c.Query("Article_Time")
+	//如果时间不为空 转化为time格式
+	if	formTime!=""{
+		var err error
+		fr.Article_Time,err=time.Parse("2006-01-02 15:04:05", formTime)
+		if err!=nil {
+			log.Fatal(err)
+		}
+	}else{
+		fr.Article_Time=time.Now()
+	}
+
+	formTime1:=c.Query("Created")
+	//如果时间不为空 转化为time格式
+	if	formTime!=""{
+		var err error
+		fr.Created,err=time.Parse("2006-01-02 15:04:05", formTime1)
+		if err!=nil {
+			log.Fatal(err)
+		}
+	}else{
+		fr.Created=time.Now()
+	}
+
+
+	result:=user.AddFavorite(&fr)
+
+	if result!="" {
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"新增收藏成功"})
+	}
 
 
 }
