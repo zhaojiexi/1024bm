@@ -63,12 +63,12 @@ func UserRegister(name,phone,password string) (user1 *User,result string) {
 
 
 	var user *User = new(User)
-	user.Uid          = bson.NewObjectId().Hex()
+	user.Uid          = bson.NewObjectId()
 	user.Name    	  = name
 	user.Phone    	  = phone
 	user.PassWord     = password
 	user.RegisterDate = time.Now()
-	user.Slug		  =user.Uid+name
+	user.Slug		  =user.Uid.Hex()+name
 	user.Location		=""
 	user.University		=""
 	user.Company		=""
@@ -117,7 +117,7 @@ func UserLogin(phone,password string)(user *User,s string){
 
     //校验密码准确性
 	query = func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Phone":phone,"PassWord":password}).All(&users)
+		return c.Find(bson.M{"Phone":phone,"PassWord":password,"IsEnabled":1}).All(&users)
 
 	}
 
@@ -150,7 +150,7 @@ func AddSession(user *User){
 	myuser := map[string]*User{
 
 
-		user.Uid:&User{user._ID,user.Uid,user.Name,user.Slug,user.Phone,
+		user.Uid.Hex():&User{user._ID,user.Uid,user.Name,user.Slug,user.Phone,
 		user.PassWord,user.RegisterDate,user.Location,user.University,
 		user.Company,user.WebSite,user.Follower_count,user.Following_count,
 		user.Browse_count,user.Article_count,user.Describe,user.Profile_image_url,
@@ -181,11 +181,13 @@ func AddSession(user *User){
 func GetUserInfo(uid string)(user *User,result string){
 
 	var users []User
-
+	ubjectid:=bson.ObjectIdHex(uid)
 	//
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Uid":uid}).All(&users)
+		return c.Find(bson.M{"Uid":ubjectid,"IsEnabled":1}).All(&users)
 	}
+
+
 	
 	err := com.GetCollection("User",query)
 	if err != nil{
@@ -208,7 +210,7 @@ func GetUsers()([]User,error){
 
 	//
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(nil).All(&users)
+		return c.Find(bson.M{"IsEnabled":1}).All(&users)
 	}
 
 	err := com.GetCollection("User",query)
@@ -282,7 +284,7 @@ func UpdateUserInfo(user *User)(string){
 
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Update(bson.M{"Uid":ulist[0].Uid},bson.M{"$set":bson.M{
+		return c.Update(bson.M{"Uid":ulist[0].Uid,"IsEnabled":1},bson.M{"$set":bson.M{
 			"Gender":ulist[0].Gender,
 			"Describe":ulist[0].Describe,
 			"Location":ulist[0].Location,
@@ -328,7 +330,7 @@ func UpdateUserPassWord(user *User)string{
 
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Update(bson.M{"Uid":user.Uid},bson.M{"$set":bson.M{
+		return c.Update(bson.M{"Uid":user.Uid,"IsEnabled":1},bson.M{"$set":bson.M{
 			"PassWord":user.PassWord,
 		}})
 	}
@@ -346,11 +348,12 @@ func UpdateUserPassWord(user *User)string{
 func GetFans(uid string)([]User,string){
 
 	//判断传入的 Following_UID 是否存在
+	ubjectid:=bson.ObjectIdHex(uid)
 
 	var follows []Follow
 
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Following_UID":uid}).All(&follows)
+		return c.Find(bson.M{"Following_UID":ubjectid,"IsEnabled":1}).All(&follows)
 	}
 
 	err := com.GetCollection("Follow",query)
@@ -372,14 +375,16 @@ func GetFans(uid string)([]User,string){
 		fmt.Println("uid",follows[i].User_UID)
 
 		query = func(c *mgo.Collection) (error) {
-			return c.Find(bson.M{"Uid":follows[i].User_UID}).All(&users)
+			return c.Find(bson.M{"Uid":follows[i].User_UID,"IsEnabled":1}).All(&users)
 		}
 		err= com.GetCollection("User",query)
 		if err != nil{
 			log.Fatalf("GetFollows: %s\n", err)
 		}
+		if len(users)>0 {
+			usersAll=append(usersAll,users[0] )
+		}
 
-		usersAll=append(usersAll,users[0] )
 
 
 	}
@@ -394,7 +399,7 @@ func AddFollow (fo *Follow)string{
 
 	var follows []Follow
 	var users []User
-
+	fmt.Println(fo.User_UID,fo.Following_UID)
 	//校验关注人是否存在
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Uid":fo.Following_UID}).All(&users)
@@ -437,14 +442,16 @@ func AddFollow (fo *Follow)string{
 
 }
 
-//获取所有关注的用户信息
+//根据uid获取所有关注的用户信息
 func GetFollows(uid string)([]User,string){
 
 	var follows []Follow
 	var users []User
+	bjectid:=bson.ObjectIdHex(uid)
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Uid":uid}).All(&users)
+		return c.Find(bson.M{"Uid":bjectid,"IsEnabled":1}).All(&users)
 	}
+	fmt.Println(uid)
 
 	err := com.GetCollection("User",query)
 	if err != nil{
@@ -455,7 +462,7 @@ func GetFollows(uid string)([]User,string){
 	}
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"User_UID":uid}).All(&follows)
+		return c.Find(bson.M{"User_UID":uid,"IsEnabled":1}).All(&follows)
 	}
 
 	err = com.GetCollection("Follow",query)
@@ -485,6 +492,38 @@ func GetFollows(uid string)([]User,string){
 
 	fmt.Println(user2)
 	return user2,""
+
+
+}
+//逻辑删除关注 把IsEnabled设置0
+func DelFollow(fo Follow)string{
+	var f []Follow
+
+	//校验关注人是否存在
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":fo.User_UID,"Following_UID":fo.Following_UID,"IsEnabled":1}).All(&f)
+	}
+	err := com.GetCollection("Follow",query)
+
+	if err != nil{
+		log.Fatalf("User-DelFollow: %s\n", err)
+	}
+	if len(f)<1{
+		return "用户不存在或状态为不可用"
+	}
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Update(bson.M{"User_UID":fo.User_UID,"Following_UID":fo.Following_UID,"IsEnabled":1},bson.M{"$set":bson.M{
+			"IsEnabled":0,
+		}})
+	}
+
+	err = com.GetCollection("Follow",query)
+	if err != nil{
+		log.Fatalf("DelFollow: %s\n", err)
+	}
+
+	return ""
 
 
 }
@@ -519,3 +558,71 @@ func AddFavorite(fr *Favorite)string{
 	return ""
 }
 
+//查询所有收藏的文章
+func GetFavoriteByID(uid string)([]Favorite){
+
+	var frlist []Favorite
+
+	ubjiectid:=bson.ObjectIdHex(uid)
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":ubjiectid,"IsEnabled":1}).All(&frlist)
+	}
+
+	err := com.GetCollection("Favorite",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+
+	return frlist
+
+}
+
+//逻辑删除收藏  把IsEnabled设置0
+func DelFavorite(fo *Favorite)(string){
+
+	var folist []Favorite
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":fo.User_UID,"Article_ID":fo.Article_ID,"IsEnabled":1}).All(&folist)
+	}
+
+	err := com.GetCollection("Favorite",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+	if len(folist)<1 {
+		return "找不到对应的文章"
+	}
+
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Update(bson.M{"User_UID":fo.User_UID,"Article_ID":fo.Article_ID},bson.M{"$set":bson.M{
+			"IsEnabled":0,
+		}})
+	}
+
+	err = com.GetCollection("Favorite",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+
+
+	return ""
+
+}
+
+func AddBrowseHistory(bh *BrowseHistory){
+
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Insert(&bh)
+	}
+
+	err := com.GetCollection("BrowseHistory",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+
+
+}

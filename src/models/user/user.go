@@ -5,10 +5,11 @@ import(
 	"gopkg.in/mgo.v2/bson"
 )
 //用户信息
+
 type User struct {
 
 	_ID	bson.ObjectId `json:"_ID" bson:"_ID"`//记录id
-	Uid 		 	string		 	`json:"Uid"            bson:"Uid"`           //用户id
+	Uid 		 	bson.ObjectId `json:"Uid" bson:"Uid"`           //用户id
 	Name 	 	 	string 			`json:"Name" bson:"Name"`     		 //用户名、昵称
 	Slug 		 	string 			`json:"Slug"      bson:"Slug"`     		 //昵称+唯一编号
 	Phone 		 	string 			`json:"Phone"          bson:"Phone"`    		//手机
@@ -36,10 +37,10 @@ type Interest struct{
 }
 //关注
 type Follow struct {
-	_ID			string			`json:"_ID"            bson:"_ID"`						//记录id
-	User_UID	string		`json:"User_UID"     bson:"User_UID"`			//用户id（我）
+	_ID			bson.ObjectId			`json:"_ID"            bson:"_ID"`						//记录id
+	User_UID	bson.ObjectId		`json:"User_UID"     bson:"User_UID"`			//用户id（我）
 	User_name	string		`json:"User_name"    bson:"User_name"`		//用户名
-	Following_UID	string	`json:"Following_UID" bson:"Following_UID"`		//关注的人id
+	Following_UID	bson.ObjectId	`json:"Following_UID" bson:"Following_UID"`		//关注的人id
 	Following_Name	string	`json:"Following_Name"          bson:"Following_Name"`		//关注的人名
 	Created	time.Time		`json:"Created"      bson:"Created"`			//创建时间（关注时间）
 	IsEnabled	int64		`json:"IsEnabled"    bson:"IsEnabled"`		//是否可用 （1可用 0不可用）
@@ -47,9 +48,9 @@ type Follow struct {
 
 //收藏
 type Favorite struct{
-	_ID	 		string		`json:"_ID" 	bson:"_ID"`//记录id
-	User_UID	string 		`json:"User_UID"          bson:"User_UID"`//收藏人id
-	Article_ID 	string		`json:"Article_ID"          bson:"Article_ID"`//文章id
+	_ID	 		bson.ObjectId		`json:"_ID" 	bson:"_ID"`//记录id
+	User_UID	bson.ObjectId 		`json:"User_UID"          bson:"User_UID"`//收藏人id
+	Article_ID 	bson.ObjectId		`json:"Article_ID"          bson:"Article_ID"`//文章id
 	Article_Title	string	`json:"Article_Title"          bson:"Article_Title"`//标题
 	Article_Author	string	`json:"Article_Author"          bson:"Article_Author"`//作者
 	Author_Picture	string	`json:"Author_Picture"          bson:"Author_Picture"`//作者头像
@@ -58,6 +59,18 @@ type Favorite struct{
 	IsEnabled		int64	`json:"IsEnabled"          bson:"IsEnabled"`//是否可用 （1可用 0不可用）
 }
 
+//BrowseHistory  浏览历史（文章）
+type BrowseHistory struct{
+	_id	bson.ObjectId `json:"_ID" bson:"_ID"`//记录id
+	User_UID bson.ObjectId `json:"User_UID" bson:"User_UID"`//浏览人id
+	Article_ID bson.ObjectId `json:"Article_ID" bson:"Article_ID"`//文章id
+	Article_Title string `json:"Article_Title" bson:"Article_Title"`	//标题
+	Article_Author	string `json:"Article_Author" bson:"Article_Author"`//作者
+	Author_Picture	string `json:"Author_Picture" bson:"Author_Picture"`//作者头像
+	Article_Time time.Time `json:"Article_Time" bson:"Article_Time"`	//发表时间
+	Created	time.Time `json:"Created" bson:"Created"`//创建时间（浏览文章的时间）
+	IsEnabled	int64 `json:"IsEnabled" bson:"IsEnabled"`//是否可用 （1可用 0不可用）
+}
 
 
 
