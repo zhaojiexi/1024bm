@@ -611,7 +611,7 @@ func DelFavorite(fo *Favorite)(string){
 	return ""
 
 }
-
+//新增浏览记录
 func AddBrowseHistory(bh *BrowseHistory){
 
 
@@ -624,5 +624,57 @@ func AddBrowseHistory(bh *BrowseHistory){
 		log.Fatalf("addFavorite: %s\n", err)
 	}
 
+
+}
+//查看浏览记录
+func GetBrowseHistory(uid string)[]BrowseHistory{
+
+
+	var bhlist []BrowseHistory
+	ubjectid:=bson.ObjectIdHex(uid)
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":ubjectid,"IsEnabled":1}).All(&bhlist)
+	}
+
+	err := com.GetCollection("BrowseHistory",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+
+	return bhlist
+
+}
+
+//删除记录
+func DelBrowseHistory(uid,article_ID string)string{
+
+	var bhlist []BrowseHistory
+	ubjectid:=bson.ObjectIdHex(uid)
+	abject:=bson.ObjectIdHex(article_ID)
+
+	query := func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":ubjectid,"Article_ID":abject,"IsEnabled":1}).All(&bhlist)
+	}
+	err := com.GetCollection("BrowseHistory",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+	if len(bhlist)<1{
+		return "该用户没有关注此文章"
+	}
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Update(bson.M{"User_UID":ubjectid,"Article_ID":abject},bson.M{"$set":bson.M{
+			"IsEnabled":0,
+		}})
+
+	}
+	err = com.GetCollection("BrowseHistory",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+
+	return ""
 
 }

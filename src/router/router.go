@@ -29,6 +29,9 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.GET("user/favoritebyid",GetFavoriteByID)	//查看收藏文章 	http://0.0.0.0:8000/user/favoritebyid?Uid=5a2a35f2bfb1481f9cf54c7a
 		userRoutert.GET("user/delfavorite",DelFavorite)	////查看收藏文章 	http://127.0.0.1:8888/api/v1/user/delfavorite?User_UID=5a2a35f2bfb1481f9cf54c7a&Article_ID=5a2a35f2bfb1481f9cf54c7a
 		userRoutert.GET("user/addbrowsehistory",AddBrowseHistory)
+		userRoutert.GET("user/getbrowsehistory",GetBrowseHistory)	//查看浏览记录http://127.0.0.1:8888/api/v1/user/getbrowsehistory?User_UID=5a3366aabfb1481940f4c672
+		userRoutert.GET("user/delbrowsehistory",DelBrowseHistory)
+
 		}
 	return router
 }
@@ -400,3 +403,24 @@ func AddBrowseHistory(c *gin.Context){
 
 }
 
+//根据用户id查看浏览记录
+func GetBrowseHistory(c *gin.Context) {
+
+	uid:=c.Query("User_UID")
+
+	list:=user.GetBrowseHistory(uid)
+
+	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"success","list":list})
+
+}
+
+//删除浏览记录 根据用户
+
+func DelBrowseHistory(c *gin.Context){
+
+	uid:=c.Query("User_UID")
+	article_ID:=c.Query("Article_ID")
+
+	user.DelBrowseHistory(uid,article_ID)
+
+}
