@@ -612,18 +612,32 @@ func DelFavorite(fo *Favorite)(string){
 
 }
 //新增浏览记录
-func AddBrowseHistory(bh *BrowseHistory){
+func AddBrowseHistory(bh *BrowseHistory)string{
 
+	var bhlist []BrowseHistory
 
 	query := func(c *mgo.Collection) (error) {
-		return c.Insert(&bh)
+		return c.Find(bson.M{"User_UID":bh.User_UID,"Article_ID":bh.Article_ID}).All(&bhlist)
 	}
 
 	err := com.GetCollection("BrowseHistory",query)
 	if err != nil{
 		log.Fatalf("addFavorite: %s\n", err)
 	}
+	if len(bhlist)>1 {
+		return "此浏览记录已存在"
+	}
 
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Insert(&bh)
+	}
+
+	err = com.GetCollection("BrowseHistory",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+	return ""
 
 }
 //查看浏览记录

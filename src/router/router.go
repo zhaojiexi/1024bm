@@ -28,7 +28,7 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.GET("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/favoritebyid",GetFavoriteByID)	//查看收藏文章 	http://0.0.0.0:8000/user/favoritebyid?Uid=5a2a35f2bfb1481f9cf54c7a
 		userRoutert.GET("user/delfavorite",DelFavorite)	////查看收藏文章 	http://127.0.0.1:8888/api/v1/user/delfavorite?User_UID=5a2a35f2bfb1481f9cf54c7a&Article_ID=5a2a35f2bfb1481f9cf54c7a
-		userRoutert.GET("user/addbrowsehistory",AddBrowseHistory)
+		userRoutert.GET("user/addbrowsehistory",AddBrowseHistory)	//http://127.0.0.1:8888/api/v1/user/addbrowsehistory?User_UID=5a3366aabfb1481940f4c672&Article_ID=5a3366aabfb1481940f4c672&Article_Title=test&Article_Author=zuozhe&Author_Picture=photo&Article_Time=2017-12-15 15:25:00&Created=2017-12-15 15:25:00
 		userRoutert.GET("user/getbrowsehistory",GetBrowseHistory)	//查看浏览记录http://127.0.0.1:8888/api/v1/user/getbrowsehistory?User_UID=5a3366aabfb1481940f4c672
 		userRoutert.GET("user/delbrowsehistory",DelBrowseHistory)
 
@@ -74,9 +74,9 @@ func GetUserInfo(c *gin.Context){
 
 	//如果为nil 返回错误信息
 	if ur==nil {
-		result=gin.H{"code":400,"msg":1,"start":0,"text":r}
+		result=gin.H{"code":200,"msg":1,"start":0,"text":r}
 	}else {
-		result=gin.H{"code":400,"msg":1,"start":0,"text":"success","UserInfo":ur}
+		result=gin.H{"code":400,"msg":1,"start":1,"text":"success","UserInfo":ur}
 	}
 
 	c.JSON(http.StatusOK,result)
@@ -188,9 +188,9 @@ func UpdateUserPassWord(c *gin.Context){
 	result:=user.UpdateUserPassWord(&u)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"text":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"修改成功"})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"修改成功"})
 	}
 
 
@@ -205,9 +205,9 @@ func GetFans(c *gin.Context){
 
 	//查询失败 返回错误信息 成功 返回成功信息和粉丝详细信息
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"查询成功","ulist":u})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"查询成功","ulist":u})
 	}
 
 
@@ -243,10 +243,10 @@ func AddFollow(c *gin.Context){
 	result:=user.AddFollow(&fo)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"新增关注成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"新增关注成功"})
 	}
 
 
@@ -260,9 +260,9 @@ func GetFollows(c *gin.Context){
 	ulist,result:=user.GetFollows(uid)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"成功","ulist":ulist})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"成功","ulist":ulist})
 	}
 
 
@@ -280,9 +280,9 @@ func DelFollow(c *gin.Context){
 	result:=user.DelFollow(fo)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"成功"})
 	}
 
 
@@ -331,10 +331,10 @@ func AddFavorite(c *gin.Context){
 	result:=user.AddFavorite(&fr)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"新增收藏成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"新增收藏成功"})
 	}
 
 
@@ -347,7 +347,7 @@ func GetFavoriteByID(c *gin.Context){
 
 	favoritelist:=user.GetFavoriteByID(uid)
 
-	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"success","list":favoritelist})
+	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success","list":favoritelist})
 
 
 }
@@ -362,9 +362,9 @@ func DelFavorite(c *gin.Context){
 
 	result:=user.DelFavorite(&fo)
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 	}else{
-	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"取消收藏成功"})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"取消收藏成功"})
 	}
 
 
@@ -398,7 +398,14 @@ func AddBrowseHistory(c *gin.Context){
 		}
 	}
 
-	user.AddBrowseHistory(&bh)
+	result:=user.AddBrowseHistory(&bh)
+
+	if	result!=""{
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"text":result})
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success"})
+	}
+
 
 
 }
@@ -414,13 +421,19 @@ func GetBrowseHistory(c *gin.Context) {
 
 }
 
-//删除浏览记录 根据用户
+//删除浏览记录 根据用户id 文章id
 
 func DelBrowseHistory(c *gin.Context){
 
 	uid:=c.Query("User_UID")
 	article_ID:=c.Query("Article_ID")
 
-	user.DelBrowseHistory(uid,article_ID)
+	result:=user.DelBrowseHistory(uid,article_ID)
+
+	if	result!=""{
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"text":result})
+	}else{
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success"})
+	}
 
 }
