@@ -168,7 +168,7 @@ func AddSession(user *User){
 		fmt.Println(redis.Args{sym}.AddFlat(row))
 	}
 	//20分钟缓存时间	//根据上面存入的 sym：uid 设置缓存时间
-	value, err := conn.Do("EXPIRE", user.Uid,1800)
+	value, err := conn.Do("EXPIRE", user.Uid.Hex(),1800)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -234,7 +234,7 @@ func UpdateUserInfo(user *User)(string){
 
 	query := func(c *mgo.Collection) (error) {
 
-		return c.Find(bson.M{"Uid":user.Uid}).All(&ulist)
+		return c.Find(bson.M{"Uid":user.Uid,"IsEnabled":"1"}).All(&ulist)
 
 	}
 	err := com.GetCollection("User",query)
@@ -269,9 +269,12 @@ func UpdateUserInfo(user *User)(string){
 	if user.Profile_image_url!=""{
 		ulist[0].Profile_image_url=user.Profile_image_url//展示网站
 	}
+	if user.Gender!=3 {
+		ulist[0].Gender=user.Gender//性别
+	}
 
 	ulist[0].LastLogin=user.LastLogin
-	ulist[0].Gender=user.Gender//性别
+
 
 /*	ulist[0].Gender=user.Gender//性别
 	ulist[0].Location=user.Location	//所在地
@@ -399,14 +402,12 @@ func AddFollow (fo *Follow)string{
 
 	var follows []Follow
 	var users []User
-	fmt.Println(fo.User_UID,fo.Following_UID)
 	//校验关注人是否存在
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Uid":fo.Following_UID}).All(&users)
 	}
 
 	err := com.GetCollection("User",query)
-	fmt.Println("User_UID:",fo.User_UID,"Following_UID:",fo.Following_UID)
 	if err != nil{
 		log.Fatalf("User-AddFollow: %s\n", err)
 	}
@@ -420,7 +421,6 @@ func AddFollow (fo *Follow)string{
 	}
 
 	err = com.GetCollection("Follow",query)
-	fmt.Println("User_UID:",fo.User_UID,"Following_UID:",fo.Following_UID)
 	if err != nil{
 		log.Fatalf("User-AddFollow: %s\n", err)
 	}
@@ -431,7 +431,7 @@ func AddFollow (fo *Follow)string{
 
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Insert(fo)
+		return c.Insert(&fo)
 	}
 
 	err = com.GetCollection("Follow",query)
@@ -451,7 +451,6 @@ func GetFollows(uid string)([]User,string){
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Uid":bjectid,"IsEnabled":1}).All(&users)
 	}
-	fmt.Println(uid)
 
 	err := com.GetCollection("User",query)
 	if err != nil{
@@ -462,7 +461,7 @@ func GetFollows(uid string)([]User,string){
 	}
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"User_UID":uid,"IsEnabled":1}).All(&follows)
+		return c.Find(bson.M{"User_UID":bjectid,"IsEnabled":1}).All(&follows)
 	}
 
 	err = com.GetCollection("Follow",query)
@@ -490,7 +489,6 @@ func GetFollows(uid string)([]User,string){
 	}
 
 
-	fmt.Println(user2)
 	return user2,""
 
 
