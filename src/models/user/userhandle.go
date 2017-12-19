@@ -24,7 +24,7 @@ func AddSession(user *User){
 	myuser := map[string]*User{
 
 
-		user.Uid.Hex():&User{user._ID,user.Uid,user.Name,user.Slug,user.Phone,
+		user.Uid.Hex():&User{user.ID,user.Uid,user.Name,user.Slug,user.Phone,
 			user.PassWord,user.RegisterDate,user.Location,user.University,
 			user.Company,user.WebSite,user.Follower_count,user.Following_count,
 			user.Browse_count,user.Article_count,user.Describe,user.Profile_image_url,
@@ -514,7 +514,7 @@ func DelFollow(fo Follow)string{
 	}
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Update(bson.M{"User_UID":fo.User_UID,"Following_UID":fo.Following_UID,"IsEnabled":1},bson.M{"$set":bson.M{
+		return c.Update(bson.M{"_id":f[0].ID},bson.M{"$set":bson.M{
 			"IsEnabled":0,
 		}})
 	}
@@ -671,16 +671,16 @@ func DelBrowseHistory(uid,article_ID string)string{
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"User_UID":ubjectid,"Article_ID":abject,"IsEnabled":1}).All(&bhlist)
 	}
+
 	err := com.GetCollection("BrowseHistory",query)
 	if err != nil{
 		log.Fatalf("addFavorite: %s\n", err)
 	}
 	if len(bhlist)<1{
-		return "该用户没有关注此文章"
+		return "该用户没有该浏览记录"
 	}
-
 	query = func(c *mgo.Collection) (error) {
-		return c.Update(bson.M{"User_UID":ubjectid,"Article_ID":abject},bson.M{"$set":bson.M{
+		return c.Update(bson.M{"_id":bhlist[0].ID},bson.M{"$set":bson.M{
 			"IsEnabled":0,
 		}})
 
