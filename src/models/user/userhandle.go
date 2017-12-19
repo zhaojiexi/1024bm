@@ -177,48 +177,7 @@ func UserLogin(phone,password string)(user *User,s string){
 
 }
 
-<<<<<<< HEAD
-//redis缓存整个用户信息
-func AddSession(user *User){
 
-	flag.Parse()
-	pool := com.RedigoPool(*com.Host, *com.Password)
-
-	conn := pool.Get() //从连接池获取连接
-	defer conn.Close() //用完后放回连接池
-
-
-	myuser := map[string]*User{
-
-
-		user.Uid.Hex():&User{user._ID,user.Uid,user.Name,user.Slug,user.Phone,
-		user.PassWord,user.RegisterDate,user.Location,user.University,
-		user.Company,user.WebSite,user.Follower_count,user.Following_count,
-		user.Browse_count,user.Article_count,user.Describe,user.Profile_image_url,
-		user.LastLogin,user.Interest,user.IsEnabled,user.Gender},
-	}
-
-
-
-	//保存Map
-	for sym, row := range myuser {
-
-		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(redis.Args{sym}.AddFlat(row))
-	}
-	//20分钟缓存时间	//根据上面存入的 sym：uid 设置缓存时间
-	value, err := conn.Do("EXPIRE", user.Uid.Hex(),1800)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println(value)//返回ok
-}
-=======
->>>>>>> dev
 
 //根据uid获取用户信息
 func GetUserInfo(uid string)(user *User,result string){

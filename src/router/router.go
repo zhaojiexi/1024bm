@@ -8,11 +8,10 @@ import (
 	"time"
 	"strconv"
 	"gopkg.in/mgo.v2/bson"
-<<<<<<< HEAD
-	"fmt"
-=======
+
 	"models/user"
->>>>>>> dev
+
+	"fmt"
 )
 //用户路由
 func SetUserRouter(router *gin.Engine) *gin.Engine {
@@ -229,12 +228,9 @@ func AddFollow(c *gin.Context){
 	fo.IsEnabled=1
 
 
-<<<<<<< HEAD
-	formTime:=c.Query("Created")
-	fmt.Println(formTime)
-=======
+
 	formTime:=c.PostForm("Created")
->>>>>>> dev
+
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
