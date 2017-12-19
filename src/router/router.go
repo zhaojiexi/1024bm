@@ -3,12 +3,12 @@ package router
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"models/user"
 	"encoding/json"
 	"log"
 	"time"
 	"strconv"
 	"gopkg.in/mgo.v2/bson"
+	"models/user"
 )
 //用户路由
 func SetUserRouter(router *gin.Engine) *gin.Engine {
@@ -19,18 +19,18 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.GET("user/getuserinfo",GetUserInfo)   //根据uid获取用户信息，如：http://0.0.0.0:8888/user/getuserinfo?Uid=5a167c7265b39931c4c57861
 		userRoutert.POST("user/login",UserLogin)                 //用户登录,如：http://0.0.0.0:8000/user/login?Phone=caimin&PassWord=123qwe
 		userRoutert.GET("user/list",GetUsers)                   //获取用户列表,如：http://0.0.0.0:8000/api/v1/user/list
-		userRoutert.POST("user/userinfo",UserInfo)                 //修改用户信息,以表单的形式接受 如：http://0.0.0.0:8000/user/userinfo 提交服务端参数在工具中创建
-		userRoutert.POST("user/updatepwd",UpdateUserPassWord)	  //修改用户密码,以表单的形式接受 如：http://0.0.0.0:8000/user/updatepwd 提交服务端参数在工具中创建
+		userRoutert.PUT("user/userinfo",UserInfo)                 //修改用户信息,以表单的形式接受 如：http://0.0.0.0:8000/user/userinfo 提交服务端参数在工具中创建
+		userRoutert.PUT("user/updatepwd",UpdateUserPassWord)	  //修改用户密码,以表单的形式接受 如：http://0.0.0.0:8000/user/updatepwd 提交服务端参数在工具中创建
 		userRoutert.GET("user/fans",GetFans)		//获取所有粉丝  http://0.0.0.0:8000/user/fans?Uid=5a167c7265b39931c4c57861
-		userRoutert.GET("user/addfollow",AddFollow)		//新增关注 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
+		userRoutert.POST("user/addfollow",AddFollow)		//新增关注 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/follows",GetFollows)		//获取所有关注用户 http://0.0.0.0:8000/user/follows?Uid=5a2a35f2bfb1481f9cf54c7a
-		userRoutert.GET("user/delfollow",DelFollow)		//http://127.0.0.1:8888/api/v1/user/delfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a333679bfb1481ee4fe16a4
-		userRoutert.GET("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
+		userRoutert.DELETE("user/delfollow",DelFollow)		//http://127.0.0.1:8888/api/v1/user/delfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a333679bfb1481ee4fe16a4
+		userRoutert.POST("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/favoritebyid",GetFavoriteByID)	//查看收藏文章 	http://0.0.0.0:8000/user/favoritebyid?Uid=5a2a35f2bfb1481f9cf54c7a
 		userRoutert.GET("user/delfavorite",DelFavorite)	////查看收藏文章 	http://127.0.0.1:8888/api/v1/user/delfavorite?User_UID=5a2a35f2bfb1481f9cf54c7a&Article_ID=5a2a35f2bfb1481f9cf54c7a
-		userRoutert.GET("user/addbrowsehistory",AddBrowseHistory)	//http://127.0.0.1:8888/api/v1/user/addbrowsehistory?User_UID=5a3366aabfb1481940f4c672&Article_ID=5a3366aabfb1481940f4c672&Article_Title=test&Article_Author=zuozhe&Author_Picture=photo&Article_Time=2017-12-15 15:25:00&Created=2017-12-15 15:25:00
+		userRoutert.POST("user/addbrowsehistory",AddBrowseHistory)	//http://127.0.0.1:8888/api/v1/user/addbrowsehistory?User_UID=5a3366aabfb1481940f4c672&Article_ID=5a3366aabfb1481940f4c672&Article_Title=test&Article_Author=zuozhe&Author_Picture=photo&Article_Time=2017-12-15 15:25:00&Created=2017-12-15 15:25:00
 		userRoutert.GET("user/getbrowsehistory",GetBrowseHistory)	//查看浏览记录http://127.0.0.1:8888/api/v1/user/getbrowsehistory?User_UID=5a3366aabfb1481940f4c672
-		userRoutert.GET("user/delbrowsehistory",DelBrowseHistory)
+		userRoutert.DELETE("user/delbrowsehistory",DelBrowseHistory)
 
 		}
 	return router
@@ -89,8 +89,8 @@ func GetUserInfo(c *gin.Context){
 
 func UserLogin(c *gin.Context){
 
-	phone := c.Query("Phone")
-	password := c.Query("PassWord")
+	phone := c.PostForm("Phone")
+	password := c.PostForm("PassWord")
 
 	u,err:=user.UserLogin(phone,password)
 
@@ -219,14 +219,14 @@ func AddFollow(c *gin.Context){
 
 	var fo user.Follow
 
-	fo.User_UID=bson.ObjectIdHex(c.Query("User_UID"))
-	fo.Following_UID=bson.ObjectIdHex(c.Query("Following_UID"))
-	fo.User_name=c.Query("User_name")
-	fo.Following_Name=c.Query("Following_Name")
+	fo.User_UID=bson.ObjectIdHex(c.PostForm("User_UID"))
+	fo.Following_UID=bson.ObjectIdHex(c.PostForm("Following_UID"))
+	fo.User_name=c.PostForm("User_name")
+	fo.Following_Name=c.PostForm("Following_Name")
 	fo.IsEnabled=1
 
 
-	formTime:=c.Query("Created")
+	formTime:=c.PostForm("Created")
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
@@ -295,15 +295,15 @@ func AddFavorite(c *gin.Context){
 
 	var fr user.Favorite
 
-	fr.User_UID=bson.ObjectIdHex(c.Query("User_UID"))
-	fr.Article_ID=bson.ObjectIdHex(c.Query("Article_ID"))
-	fr.Article_Title=c.Query("Article_Title")
-	fr.Article_Author=c.Query("Article_Author")
-	fr.Author_Picture=c.Query("Author_Picture")
+	fr.User_UID=bson.ObjectIdHex(c.PostForm("User_UID"))
+	fr.Article_ID=bson.ObjectIdHex(c.PostForm("Article_ID"))
+	fr.Article_Title=c.PostForm("Article_Title")
+	fr.Article_Author=c.PostForm("Article_Author")
+	fr.Author_Picture=c.PostForm("Author_Picture")
 
 	fr.IsEnabled=1
 
-	formTime:=c.Query("Article_Time")
+	formTime:=c.PostForm("Article_Time")
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
@@ -315,7 +315,7 @@ func AddFavorite(c *gin.Context){
 		fr.Article_Time=time.Now()
 	}
 
-	formTime1:=c.Query("Created")
+	formTime1:=c.PostForm("Created")
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
@@ -331,10 +331,10 @@ func AddFavorite(c *gin.Context){
 	result:=user.AddFavorite(&fr)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"新增收藏成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -347,7 +347,7 @@ func GetFavoriteByID(c *gin.Context){
 
 	favoritelist:=user.GetFavoriteByID(uid)
 
-	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success","list":favoritelist})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","list":favoritelist})
 
 
 }
@@ -376,13 +376,13 @@ func AddBrowseHistory(c *gin.Context){
 	var err error
  	var bh user.BrowseHistory
 
-	bh.User_UID=bson.ObjectIdHex(c.Query("User_UID"))
-	bh.Article_ID=bson.ObjectIdHex(c.Query("Article_ID"))
-	bh.Article_Title=c.Query("Article_Title")
-	bh.Article_Author=c.Query("Article_Author")
-	bh.Author_Picture=c.Query("Author_Picture")
-	article_Time:=c.Query("Article_Time")
-	created:=c.Query("Created")
+	bh.User_UID=bson.ObjectIdHex(c.PostForm("User_UID"))
+	bh.Article_ID=bson.ObjectIdHex(c.PostForm("Article_ID"))
+	bh.Article_Title=c.PostForm("Article_Title")
+	bh.Article_Author=c.PostForm("Article_Author")
+	bh.Author_Picture=c.PostForm("Author_Picture")
+	article_Time:=c.PostForm("Article_Time")
+	created:=c.PostForm("Created")
 	bh.IsEnabled=1
 
 	if article_Time!="" {
