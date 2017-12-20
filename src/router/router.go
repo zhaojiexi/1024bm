@@ -3,12 +3,15 @@ package router
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"models/user"
 	"encoding/json"
 	"log"
 	"time"
 	"strconv"
 	"gopkg.in/mgo.v2/bson"
+
+	"models/user"
+
+	"fmt"
 )
 //用户路由
 func SetUserRouter(router *gin.Engine) *gin.Engine {
@@ -19,18 +22,18 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.GET("user/getuserinfo",GetUserInfo)   //根据uid获取用户信息，如：http://0.0.0.0:8888/user/getuserinfo?Uid=5a167c7265b39931c4c57861
 		userRoutert.POST("user/login",UserLogin)                 //用户登录,如：http://0.0.0.0:8000/user/login?Phone=caimin&PassWord=123qwe
 		userRoutert.GET("user/list",GetUsers)                   //获取用户列表,如：http://0.0.0.0:8000/api/v1/user/list
-		userRoutert.POST("user/userinfo",UserInfo)                 //修改用户信息,以表单的形式接受 如：http://0.0.0.0:8000/user/userinfo 提交服务端参数在工具中创建
-		userRoutert.POST("user/updatepwd",UpdateUserPassWord)	  //修改用户密码,以表单的形式接受 如：http://0.0.0.0:8000/user/updatepwd 提交服务端参数在工具中创建
+		userRoutert.PUT("user/userinfo",UserInfo)                 //修改用户信息,以表单的形式接受 如：http://0.0.0.0:8000/user/userinfo 提交服务端参数在工具中创建
+		userRoutert.PUT("user/updatepwd",UpdateUserPassWord)	  //修改用户密码,以表单的形式接受 如：http://0.0.0.0:8000/user/updatepwd 提交服务端参数在工具中创建
 		userRoutert.GET("user/fans",GetFans)		//获取所有粉丝  http://0.0.0.0:8000/user/fans?Uid=5a167c7265b39931c4c57861
-		userRoutert.GET("user/addfollow",AddFollow)		//新增关注 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
+		userRoutert.POST("user/addfollow",AddFollow)		//新增关注 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/follows",GetFollows)		//获取所有关注用户 http://0.0.0.0:8000/user/follows?Uid=5a2a35f2bfb1481f9cf54c7a
-		userRoutert.GET("user/delfollow",DelFollow)		//http://127.0.0.1:8888/api/v1/user/delfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a333679bfb1481ee4fe16a4
-		userRoutert.GET("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
+		userRoutert.DELETE("user/delfollow",DelFollow)		//http://127.0.0.1:8888/api/v1/user/delfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a333679bfb1481ee4fe16a4
+		userRoutert.POST("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/favoritebyid",GetFavoriteByID)	//查看收藏文章 	http://0.0.0.0:8000/user/favoritebyid?Uid=5a2a35f2bfb1481f9cf54c7a
 		userRoutert.GET("user/delfavorite",DelFavorite)	////查看收藏文章 	http://127.0.0.1:8888/api/v1/user/delfavorite?User_UID=5a2a35f2bfb1481f9cf54c7a&Article_ID=5a2a35f2bfb1481f9cf54c7a
-		userRoutert.GET("user/addbrowsehistory",AddBrowseHistory)	//http://127.0.0.1:8888/api/v1/user/addbrowsehistory?User_UID=5a3366aabfb1481940f4c672&Article_ID=5a3366aabfb1481940f4c672&Article_Title=test&Article_Author=zuozhe&Author_Picture=photo&Article_Time=2017-12-15 15:25:00&Created=2017-12-15 15:25:00
+		userRoutert.POST("user/addbrowsehistory",AddBrowseHistory)	//http://127.0.0.1:8888/api/v1/user/addbrowsehistory?User_UID=5a3366aabfb1481940f4c672&Article_ID=5a3366aabfb1481940f4c672&Article_Title=test&Article_Author=zuozhe&Author_Picture=photo&Article_Time=2017-12-15 15:25:00&Created=2017-12-15 15:25:00
 		userRoutert.GET("user/getbrowsehistory",GetBrowseHistory)	//查看浏览记录http://127.0.0.1:8888/api/v1/user/getbrowsehistory?User_UID=5a3366aabfb1481940f4c672
-		userRoutert.GET("user/delbrowsehistory",DelBrowseHistory)
+		userRoutert.DELETE("user/delbrowsehistory",DelBrowseHistory)
 
 		}
 	return router
@@ -48,10 +51,10 @@ func UserRegister(c *gin.Context) {
 	ur,err:=user.UserRegister(_name,_phone,_password)
 
 	if ur==nil{
-		result=gin.H{"code":400,"msg":1,"start":0,"text":err}
+		result=gin.H{"code":400,"msg":1,"start":0,"result":err}
 	}else if ur!=nil{
 
-		result=gin.H{"code":200,"msg":1,"start":1,"text":"注册成功"}
+		result=gin.H{"code":200,"msg":1,"start":1,"result":"注册成功"}
 
 	}
 
@@ -74,9 +77,9 @@ func GetUserInfo(c *gin.Context){
 
 	//如果为nil 返回错误信息
 	if ur==nil {
-		result=gin.H{"code":200,"msg":1,"start":0,"text":r}
+		result=gin.H{"code":400,"msg":1,"start":0,"result":r}
 	}else {
-		result=gin.H{"code":400,"msg":1,"start":1,"text":"success","UserInfo":ur}
+		result=gin.H{"code":200,"msg":1,"start":1,"result":"success","UserInfo":ur}
 	}
 
 	c.JSON(http.StatusOK,result)
@@ -89,17 +92,17 @@ func GetUserInfo(c *gin.Context){
 
 func UserLogin(c *gin.Context){
 
-	phone := c.Query("Phone")
-	password := c.Query("PassWord")
+	phone := c.PostForm("Phone")
+	password := c.PostForm("PassWord")
 
 	u,err:=user.UserLogin(phone,password)
 
 	//用户不存在 或 账号密码错误 返回界面提示用户信息
 	if u==nil {
 		//user:=u[0]
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":err})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"retult":err})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"登录成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"登录成功","User":u})
 	}
 
 
@@ -112,10 +115,11 @@ func UserLogin(c *gin.Context){
 func GetUsers(c *gin.Context){
 
 
-	ulist,_:=user.GetUsers()
+
+	ulist,_:=user.GetUsers(5,5)
 
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":" ","user":ulist})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","UserList":ulist})
 
 
 }
@@ -138,10 +142,9 @@ func UserInfo (c *gin.Context){
 
 	if g!=""{
 		u.Gender,_=strconv.ParseInt(g,10,64)
+	}else {
+		u.Gender=3	//标记一下 表示字段取查询出来的数据
 	}
-	//else {
-	//	u.Gender=3	//标记一下 表示字段取查询出来的数据
-	//}
 
 
 	u.Uid=bson.ObjectIdHex(c.PostForm("Uid"))	//用户id
@@ -170,9 +173,9 @@ func UserInfo (c *gin.Context){
 	//如果返回值不为“” 则错误 返回错误信息
 	if result!="" {
 		//user:=u[0]
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"修改成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -188,9 +191,9 @@ func UpdateUserPassWord(c *gin.Context){
 	result:=user.UpdateUserPassWord(&u)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"修改成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -205,9 +208,9 @@ func GetFans(c *gin.Context){
 
 	//查询失败 返回错误信息 成功 返回成功信息和粉丝详细信息
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"查询成功","ulist":u})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","UserList":u})
 	}
 
 
@@ -219,18 +222,21 @@ func AddFollow(c *gin.Context){
 
 	var fo user.Follow
 
-	fo.User_UID=bson.ObjectIdHex(c.Query("User_UID"))
-	fo.Following_UID=bson.ObjectIdHex(c.Query("Following_UID"))
-	fo.User_name=c.Query("User_name")
-	fo.Following_Name=c.Query("Following_Name")
+	fo.User_UID=bson.ObjectIdHex(c.PostForm("User_UID"))
+	fo.Following_UID=bson.ObjectIdHex(c.PostForm("Following_UID"))
+	fo.User_name=c.PostForm("User_name")
+	fo.Following_Name=c.PostForm("Following_Name")
 	fo.IsEnabled=1
 
 
-	formTime:=c.Query("Created")
+
+	formTime:=c.PostForm("Created")
+
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
 		fo.Created,err=time.Parse("2006-01-02 15:04:05", formTime)
+		fmt.Println(fo.Created)
 		if err!=nil {
 			log.Fatal(err)
 		}
@@ -246,7 +252,7 @@ func AddFollow(c *gin.Context){
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
 
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"新增关注成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"success"})
 	}
 
 
@@ -260,9 +266,9 @@ func GetFollows(c *gin.Context){
 	ulist,result:=user.GetFollows(uid)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"成功","ulist":ulist})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"成功","UserList":ulist})
 	}
 
 
@@ -280,9 +286,9 @@ func DelFollow(c *gin.Context){
 	result:=user.DelFollow(fo)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -295,15 +301,15 @@ func AddFavorite(c *gin.Context){
 
 	var fr user.Favorite
 
-	fr.User_UID=bson.ObjectIdHex(c.Query("User_UID"))
-	fr.Article_ID=bson.ObjectIdHex(c.Query("Article_ID"))
-	fr.Article_Title=c.Query("Article_Title")
-	fr.Article_Author=c.Query("Article_Author")
-	fr.Author_Picture=c.Query("Author_Picture")
+	fr.User_UID=bson.ObjectIdHex(c.PostForm("User_UID"))
+	fr.Article_ID=bson.ObjectIdHex(c.PostForm("Article_ID"))
+	fr.Article_Title=c.PostForm("Article_Title")
+	fr.Article_Author=c.PostForm("Article_Author")
+	fr.Author_Picture=c.PostForm("Author_Picture")
 
 	fr.IsEnabled=1
 
-	formTime:=c.Query("Article_Time")
+	formTime:=c.PostForm("Article_Time")
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
@@ -315,7 +321,7 @@ func AddFavorite(c *gin.Context){
 		fr.Article_Time=time.Now()
 	}
 
-	formTime1:=c.Query("Created")
+	formTime1:=c.PostForm("Created")
 	//如果时间不为空 转化为time格式
 	if	formTime!=""{
 		var err error
@@ -331,10 +337,10 @@ func AddFavorite(c *gin.Context){
 	result:=user.AddFavorite(&fr)
 
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"新增收藏成功"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -347,7 +353,7 @@ func GetFavoriteByID(c *gin.Context){
 
 	favoritelist:=user.GetFavoriteByID(uid)
 
-	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success","list":favoritelist})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","list":favoritelist})
 
 
 }
@@ -376,13 +382,13 @@ func AddBrowseHistory(c *gin.Context){
 	var err error
  	var bh user.BrowseHistory
 
-	bh.User_UID=bson.ObjectIdHex(c.Query("User_UID"))
-	bh.Article_ID=bson.ObjectIdHex(c.Query("Article_ID"))
-	bh.Article_Title=c.Query("Article_Title")
-	bh.Article_Author=c.Query("Article_Author")
-	bh.Author_Picture=c.Query("Author_Picture")
-	article_Time:=c.Query("Article_Time")
-	created:=c.Query("Created")
+	bh.User_UID=bson.ObjectIdHex(c.PostForm("User_UID"))
+	bh.Article_ID=bson.ObjectIdHex(c.PostForm("Article_ID"))
+	bh.Article_Title=c.PostForm("Article_Title")
+	bh.Article_Author=c.PostForm("Article_Author")
+	bh.Author_Picture=c.PostForm("Author_Picture")
+	article_Time:=c.PostForm("Article_Time")
+	created:=c.PostForm("Created")
 	bh.IsEnabled=1
 
 	if article_Time!="" {
@@ -417,12 +423,13 @@ func GetBrowseHistory(c *gin.Context) {
 
 	list:=user.GetBrowseHistory(uid)
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"success","list":list})
+
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","list":list})
+
 
 }
 
 //删除浏览记录 根据用户id 文章id
-
 func DelBrowseHistory(c *gin.Context){
 
 	uid:=c.Query("User_UID")
@@ -431,9 +438,11 @@ func DelBrowseHistory(c *gin.Context){
 	result:=user.DelBrowseHistory(uid,article_ID)
 
 	if	result!=""{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
+
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"result":"success"})
+
 	}
 
 }

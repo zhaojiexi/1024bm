@@ -11,6 +11,46 @@ import (
 	"fmt"
 )
 
+//redis缓存整个用户信息
+func AddSession(user *User){
+
+	flag.Parse()
+	pool := com.RedigoPool(*com.Host, *com.Password)
+
+	conn := pool.Get() //从连接池获取连接
+	defer conn.Close() //用完后放回连接池
+
+
+	myuser := map[string]*User{
+
+
+		user.Uid.Hex():&User{user.ID,user.Uid,user.Name,user.Slug,user.Phone,
+			user.PassWord,user.RegisterDate,user.Location,user.University,
+			user.Company,user.WebSite,user.Follower_count,user.Following_count,
+			user.Browse_count,user.Article_count,user.Describe,user.Profile_image_url,
+			user.LastLogin,user.Interest,user.IsEnabled,user.Gender},
+	}
+
+
+
+	//保存Map
+	for sym, row := range myuser {
+
+		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(redis.Args{sym}.AddFlat(row))
+	}
+	//20分钟缓存时间	//根据上面存入的 sym：uid 设置缓存时间
+	value, err := conn.Do("EXPIRE", user.Uid,1800)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(value)//返回ok
+}
+
 //用户注册
 func UserRegister(name,phone,password string) (user1 *User,result string) {
 
@@ -137,45 +177,7 @@ func UserLogin(phone,password string)(user *User,s string){
 
 }
 
-//redis缓存整个用户信息
-func AddSession(user *User){
 
-	flag.Parse()
-	pool := com.RedigoPool(*com.Host, *com.Password)
-
-	conn := pool.Get() //从连接池获取连接
-	defer conn.Close() //用完后放回连接池
-
-
-	myuser := map[string]*User{
-
-
-		user.Uid.Hex():&User{user._ID,user.Uid,user.Name,user.Slug,user.Phone,
-		user.PassWord,user.RegisterDate,user.Location,user.University,
-		user.Company,user.WebSite,user.Follower_count,user.Following_count,
-		user.Browse_count,user.Article_count,user.Describe,user.Profile_image_url,
-		user.LastLogin,user.Interest,user.IsEnabled,user.Gender},
-	}
-
-
-
-	//保存Map
-	for sym, row := range myuser {
-
-		if _, err := conn.Do("HMSET", redis.Args{sym}.AddFlat(row)...); err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(redis.Args{sym}.AddFlat(row))
-	}
-	//20分钟缓存时间	//根据上面存入的 sym：uid 设置缓存时间
-	value, err := conn.Do("EXPIRE", user.Uid,1800)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println(value)//返回ok
-}
 
 //根据uid获取用户信息
 func GetUserInfo(uid string)(user *User,result string){
@@ -193,6 +195,7 @@ func GetUserInfo(uid string)(user *User,result string){
 	if err != nil{
 		log.Fatalf("User-GetUserInfo: %s\n", err)
 	}
+
 	if len(users)<1 {
 		return nil,"该用户不存在"
 	}
@@ -204,20 +207,25 @@ func GetUserInfo(uid string)(user *User,result string){
 
 //查找所有用户信息
 
-func GetUsers()([]User,error){
+func GetUsers(pagenum,pagemax int)([]User,error){
 
 	var users []User
 
+	var ts []Test
+
 	//
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"IsEnabled":1}).All(&users)
+		return c.Find(nil).Skip(pagenum*pagenum).Limit(pagenum).All(&ts)
 	}
 
-	err := com.GetCollection("User",query)
+	err := com.GetCollection("test",query)
 	if err != nil{
 		log.Fatalf("getUsers: %s\n", err)
 	}
-
+	fmt.Println ("总条数:",len(users))
+	for k,v:=range ts  {
+		fmt.Println(k,v)
+	}
 
 	return users,err
 
@@ -234,7 +242,7 @@ func UpdateUserInfo(user *User)(string){
 
 	query := func(c *mgo.Collection) (error) {
 
-		return c.Find(bson.M{"Uid":user.Uid}).All(&ulist)
+		return c.Find(bson.M{"Uid":user.Uid,"IsEnabled":"1"}).All(&ulist)
 
 	}
 	err := com.GetCollection("User",query)
@@ -269,9 +277,12 @@ func UpdateUserInfo(user *User)(string){
 	if user.Profile_image_url!=""{
 		ulist[0].Profile_image_url=user.Profile_image_url//展示网站
 	}
+	if user.Gender!=3 {
+		ulist[0].Gender=user.Gender//性别
+	}
 
 	ulist[0].LastLogin=user.LastLogin
-	ulist[0].Gender=user.Gender//性别
+
 
 /*	ulist[0].Gender=user.Gender//性别
 	ulist[0].Location=user.Location	//所在地
@@ -399,14 +410,12 @@ func AddFollow (fo *Follow)string{
 
 	var follows []Follow
 	var users []User
-	fmt.Println(fo.User_UID,fo.Following_UID)
 	//校验关注人是否存在
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Uid":fo.Following_UID}).All(&users)
 	}
 
 	err := com.GetCollection("User",query)
-	fmt.Println("User_UID:",fo.User_UID,"Following_UID:",fo.Following_UID)
 	if err != nil{
 		log.Fatalf("User-AddFollow: %s\n", err)
 	}
@@ -420,7 +429,6 @@ func AddFollow (fo *Follow)string{
 	}
 
 	err = com.GetCollection("Follow",query)
-	fmt.Println("User_UID:",fo.User_UID,"Following_UID:",fo.Following_UID)
 	if err != nil{
 		log.Fatalf("User-AddFollow: %s\n", err)
 	}
@@ -431,7 +439,7 @@ func AddFollow (fo *Follow)string{
 
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Insert(fo)
+		return c.Insert(&fo)
 	}
 
 	err = com.GetCollection("Follow",query)
@@ -451,7 +459,6 @@ func GetFollows(uid string)([]User,string){
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Uid":bjectid,"IsEnabled":1}).All(&users)
 	}
-	fmt.Println(uid)
 
 	err := com.GetCollection("User",query)
 	if err != nil{
@@ -462,7 +469,7 @@ func GetFollows(uid string)([]User,string){
 	}
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"User_UID":uid,"IsEnabled":1}).All(&follows)
+		return c.Find(bson.M{"User_UID":bjectid,"IsEnabled":1}).All(&follows)
 	}
 
 	err = com.GetCollection("Follow",query)
@@ -490,7 +497,6 @@ func GetFollows(uid string)([]User,string){
 	}
 
 
-	fmt.Println(user2)
 	return user2,""
 
 
@@ -513,7 +519,7 @@ func DelFollow(fo Follow)string{
 	}
 
 	query = func(c *mgo.Collection) (error) {
-		return c.Update(bson.M{"User_UID":fo.User_UID,"Following_UID":fo.Following_UID,"IsEnabled":1},bson.M{"$set":bson.M{
+		return c.Update(bson.M{"_id":f[0].ID},bson.M{"$set":bson.M{
 			"IsEnabled":0,
 		}})
 	}
@@ -670,16 +676,16 @@ func DelBrowseHistory(uid,article_ID string)string{
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"User_UID":ubjectid,"Article_ID":abject,"IsEnabled":1}).All(&bhlist)
 	}
+
 	err := com.GetCollection("BrowseHistory",query)
 	if err != nil{
 		log.Fatalf("addFavorite: %s\n", err)
 	}
 	if len(bhlist)<1{
-		return "该用户没有关注此文章"
+		return "该用户没有该浏览记录"
 	}
-
 	query = func(c *mgo.Collection) (error) {
-		return c.Update(bson.M{"User_UID":ubjectid,"Article_ID":abject},bson.M{"$set":bson.M{
+		return c.Update(bson.M{"_id":bhlist[0].ID},bson.M{"$set":bson.M{
 			"IsEnabled":0,
 		}})
 
