@@ -617,7 +617,7 @@ func AddBrowseHistory(bh *BrowseHistory)string{
 	var bhlist []BrowseHistory
 
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"User_UID":bh.User_UID,"Article_ID":bh.Article_ID}).All(&bhlist)
+		return c.Find(bson.M{"User_UID":bh.User_UID,"Article_ID":bh.Article_ID,"IsEnabled":1}).All(&bhlist)
 	}
 
 	err := com.GetCollection("BrowseHistory",query)

@@ -362,9 +362,9 @@ func DelFavorite(c *gin.Context){
 
 	result:=user.DelFavorite(&fo)
 	if result!="" {
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"取消收藏成功"})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -401,9 +401,9 @@ func AddBrowseHistory(c *gin.Context){
 	result:=user.AddBrowseHistory(&bh)
 
 	if	result!=""{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 
@@ -417,7 +417,7 @@ func GetBrowseHistory(c *gin.Context) {
 
 	list:=user.GetBrowseHistory(uid)
 
-	c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"text":"success","list":list})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"text":"success","list":list})
 
 }
 
@@ -431,9 +431,9 @@ func DelBrowseHistory(c *gin.Context){
 	result:=user.DelBrowseHistory(uid,article_ID)
 
 	if	result!=""{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"text":result})
+		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"text":"success"})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success"})
 	}
 
 }
