@@ -30,6 +30,7 @@ func main() {
 func InitRouters() *gin.Engine {
 	_initrouter := gin.Default()
 	_initrouter = router.SetUserRouter(_initrouter)
+	_initrouter = router.SetArtiCleRouter(_initrouter)
 	//router.GET("/user/:name", handle.GetUserName) //http://0.0.0.0:8000/user/caimin
 	//router.GET("/register", api.Userregister) //http://0.0.0.0:8000/reg?name=caimin
 	//router.GET("/login", api.UserLogin) //http://0.0.0.0:8000/user?name=caimin
