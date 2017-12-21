@@ -115,7 +115,8 @@ func UserLogin(c *gin.Context){
 func GetUsers(c *gin.Context){
 
 
-	ulist,_:=user.GetUsers()
+
+	ulist,_:=user.GetUsers(5,5)
 
 
 	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","UserList":ulist})
@@ -422,7 +423,9 @@ func GetBrowseHistory(c *gin.Context) {
 
 	list:=user.GetBrowseHistory(uid)
 
+
 	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","list":list})
+
 
 }
 
@@ -435,9 +438,11 @@ func DelBrowseHistory(c *gin.Context){
 	result:=user.DelBrowseHistory(uid,article_ID)
 
 	if	result!=""{
+
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":1,"result":result})
 	}else{
 		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":0,"result":"success"})
+
 	}
 
 }

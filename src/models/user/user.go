@@ -72,7 +72,9 @@ type BrowseHistory struct{
 	IsEnabled	int64 `json:"IsEnabled" bson:"IsEnabled"`//是否可用 （1可用 0不可用）
 }
 
-
+type Test struct{
+	ID int64 `bson:"id"`
+}
 
 
 

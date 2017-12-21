@@ -93,37 +93,9 @@ func AddArticle(c *gin.Context){
 	json.Unmarshal([]byte(Tags),&a)
 
 	a.Text=c.PostForm("Text")//内容
-	lc:=c.PostForm("Like_count")
-	if lc!="" {
-		a.Like_count,err=strconv.ParseInt(lc,10,64)
-	}
-	checkERR(err)
-	dc:=c.PostForm("Dislike_count")
-	if lc!="" {
-		a.Dislike_count,err=strconv.ParseInt(dc,10,64)
-	}
-	checkERR(err)
-	cc:=c.PostForm("Comment_count")
-	if lc!="" {
-		a.Comment_count,err=strconv.ParseInt(cc,10,64)
-	}
-	checkERR(err)
-	cdc:=c.PostForm("Collected_count")
-	if lc!="" {
-		a.Collected_count,err=strconv.ParseInt(cdc,10,64)
-	}
-	checkERR(err)
-	rc:=c.PostForm("Read_count")
-	if lc!="" {
-		a.Read_count,err=strconv.ParseInt(rc,10,64)
-	}
-	checkERR(err)
-
 
 
 	c.JSON(http.StatusOK,article.AddArticle(&a))
-
-
 
 
 

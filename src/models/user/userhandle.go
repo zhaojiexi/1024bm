@@ -195,6 +195,7 @@ func GetUserInfo(uid string)(user *User,result string){
 	if err != nil{
 		log.Fatalf("User-GetUserInfo: %s\n", err)
 	}
+
 	if len(users)<1 {
 		return nil,"该用户不存在"
 	}
@@ -206,20 +207,25 @@ func GetUserInfo(uid string)(user *User,result string){
 
 //查找所有用户信息
 
-func GetUsers()([]User,error){
+func GetUsers(pagenum,pagemax int)([]User,error){
 
 	var users []User
 
+	var ts []Test
+
 	//
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"IsEnabled":1}).All(&users)
+		return c.Find(nil).Skip(pagenum*pagenum).Limit(pagenum).All(&ts)
 	}
 
-	err := com.GetCollection("User",query)
+	err := com.GetCollection("test",query)
 	if err != nil{
 		log.Fatalf("getUsers: %s\n", err)
 	}
-
+	fmt.Println ("总条数:",len(users))
+	for k,v:=range ts  {
+		fmt.Println(k,v)
+	}
 
 	return users,err
 

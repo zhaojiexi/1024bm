@@ -65,6 +65,11 @@ func AddArticle(a *Article)string{
 	a.ID=bson.NewObjectId()
 	a.ArticleID=bson.NewObjectId()
 	a.IsEnabled=1
+	a.Like_count=0
+	a.Dislike_count=0
+	a.Comment_count=0
+	a.Collected_count=0
+	a.Read_count=0
 
 	query := func(c *mgo.Collection) (error) {
 		return c.Insert(a)
