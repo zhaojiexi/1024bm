@@ -190,7 +190,6 @@ func UserLogin(phone,password string)(user *User,s string){
 }
 
 
-
 //根据uid获取用户信息
 func GetUserInfo(uid string)(user *User,result string){
 
@@ -241,7 +240,7 @@ func GetUsers(pagenum,pagecount int)([]User,int,int,int,int,error){
 		PageMax++
 	}
 	//如果输入的页数大于最大页数 则=最大页数
-	if pagenum>PageMax {
+	if pagenum>PageMax&&PageMax!=0 {
 		pagenum=PageMax
 	}
 	//如果输入的小于最大页数 则=1 第一页
@@ -389,13 +388,12 @@ func UpdateUserPassWord(user *User)string{
 }
 
 //根据关注人的id Following_UID 获取粉丝
-func GetFans(uid string)([]User,string){
+func GetFans(uid string,pagenum,pagecount int)([]User,int,int,int,int,string){
 
 	//判断传入的 Following_UID 是否存在
 	ubjectid:=bson.ObjectIdHex(uid)
 
 	var follows []Follow
-
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Following_UID":ubjectid,"IsEnabled":1}).All(&follows)
 	}
@@ -404,19 +402,45 @@ func GetFans(uid string)([]User,string){
 	if err != nil{
 		log.Fatalf("getUsers: %s\n", err)
 	}
-	if len(follows)<1 {
-		return nil,"用户不存在"
+	fmt.Println("sum",)
+	//总条数
+	pageSum:=len(follows)
+	//总页数
+	PageMax:=pageSum/pagecount
+	//取模判断是否整除 不整除+1
+	if pageSum%pagecount!=0 {
+		pageSum++
 	}
+	if pagenum> pageSum{
+		pagenum=pageSum
+	}
+	if pagenum<1 {
+		pagenum=1
+	}
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"Following_UID":ubjectid,"IsEnabled":1}).Skip((pagenum-1)*pagecount).Limit(pagecount).All(&follows)
+	}
+
+	err = com.GetCollection("Follow",query)
+	if err != nil{
+		log.Fatalf("getUsers: %s\n", err)
+	}
+	if len(follows)<1 {
+		return nil,0,0,0,0,"用户不存在"
+	}
+
+	var users []User
+
 
 
 
 	// 根据关注表 获取用户信息 再用一个总的用户数组保存 并返回所有粉丝
-	var users []User
+
 	var usersAll []User
 
 	fmt.Println("len",len(follows))
 	for   i:=0;i<len(follows) ;i++  {
-		fmt.Println("uid",follows[i].User_UID)
 
 		query = func(c *mgo.Collection) (error) {
 			return c.Find(bson.M{"Uid":follows[i].User_UID,"IsEnabled":1}).All(&users)
@@ -432,10 +456,9 @@ func GetFans(uid string)([]User,string){
 
 
 	}
-	fmt.Println(usersAll)
 
 
-	return usersAll,""
+	return usersAll,pagenum,pagecount,PageMax,pageSum,""
 }
 
 //新增关注
@@ -444,6 +467,7 @@ func AddFollow (fo *Follow)string{
 	var follows []Follow
 	var users []User
 	//校验关注人是否存在
+
 	query := func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"Uid":fo.Following_UID}).All(&users)
 	}
@@ -522,7 +546,7 @@ func GetFollows(uid string,pagenum,pagecount int)([]User,string,int,int,int,int)
 	if pageSum%pagenum!=0 {
 		PageMax++
 	}
-	if pagenum> PageMax{
+	if pagenum> PageMax&&PageMax!=0{
 		pagenum=PageMax
 	}
 	if pagenum<1 {
@@ -618,7 +642,7 @@ func AddFavorite(fr *Favorite)string{
 		return "已关注此文章，请勿重复关注"
 	}
 
-
+	fr.ID=bson.NewObjectId()
 
 	query = func(c *mgo.Collection) (error) {
 		return c.Insert(fr)
@@ -632,10 +656,9 @@ func AddFavorite(fr *Favorite)string{
 }
 
 //查询所有收藏的文章
-func GetFavoriteByID(uid string)([]Favorite){
+func GetFavoriteByID(uid string,pagenum,pagecount int)([]Favorite,int,int,int,int){
 
 	var frlist []Favorite
-
 	ubjiectid:=bson.ObjectIdHex(uid)
 
 	query := func(c *mgo.Collection) (error) {
@@ -646,8 +669,36 @@ func GetFavoriteByID(uid string)([]Favorite){
 	if err != nil{
 		log.Fatalf("addFavorite: %s\n", err)
 	}
+	PageSum:=len(frlist)
+	PageMax:=PageSum/pagecount
 
-	return frlist
+	if PageSum%pagecount!=0 {
+		PageMax++
+	}
+	if pagenum>PageMax&&PageMax!=0{
+		pagenum=PageMax
+	}
+	if pagenum<0 {
+		pagenum=1
+	}
+
+
+	fmt.Println(len(frlist))
+	fmt.Println("pagenum:",pagenum)
+	fmt.Println("PageMax:",PageMax)
+
+
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":ubjiectid,"IsEnabled":1}).Skip((pagenum-1)*pagecount).Limit(pagecount).All(&frlist)
+	}
+
+	err = com.GetCollection("Favorite",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+	fmt.Println(len(frlist))
+
+	return frlist,pagenum,pagecount,PageSum,PageMax
 
 }
 
@@ -700,7 +751,7 @@ func AddBrowseHistory(bh *BrowseHistory)string{
 	if len(bhlist)>1 {
 		return "此浏览记录已存在"
 	}
-
+		bh.ID=bson.NewObjectId()
 
 	query = func(c *mgo.Collection) (error) {
 		return c.Insert(&bh)
@@ -714,7 +765,7 @@ func AddBrowseHistory(bh *BrowseHistory)string{
 
 }
 //查看浏览记录
-func GetBrowseHistory(uid string)[]BrowseHistory{
+func GetBrowseHistory(uid string,pagenum,pagecount int)([]BrowseHistory,int,int,int,int){
 
 
 	var bhlist []BrowseHistory
@@ -729,7 +780,29 @@ func GetBrowseHistory(uid string)[]BrowseHistory{
 		log.Fatalf("addFavorite: %s\n", err)
 	}
 
-	return bhlist
+	PageSum:=len(bhlist)
+	PageMax:=PageSum/pagecount
+
+	if PageSum%pagecount!=0 {
+		PageMax++
+	}
+	if pagenum>PageMax&&PageMax!=0{
+		pagenum=PageMax
+	}
+	if pagenum<0 {
+		pagenum = 1
+	}
+	fmt.Println("PageSum:",PageSum)
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":ubjectid,"IsEnabled":1}).Skip((pagenum-1)*pagecount).Limit(pagecount).All(&bhlist)
+	}
+
+	err = com.GetCollection("BrowseHistory",query)
+	if err != nil{
+		log.Fatalf("addFavorite: %s\n", err)
+	}
+
+	return bhlist,pagenum,pagecount,PageSum,PageMax
 
 }
 

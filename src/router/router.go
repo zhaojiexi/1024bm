@@ -102,7 +102,7 @@ func UserLogin(c *gin.Context){
 		//user:=u[0]
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"retult":err})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"登录成功","User":u})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"登录成功","context":u})
 	}
 
 
@@ -227,15 +227,35 @@ func UpdateUserPassWord(c *gin.Context){
 
 //uid查询所有粉丝
 func GetFans(c *gin.Context){
-	uid:=c.Query("Uid")
 
-	u,result:=user.GetFans(uid)
+
+	var pn,pc int
+	var err error
+	uid:=c.Query("Uid")
+	pnum:=c.Query("PageNum")
+	pcount:=c.Query("PageCount")
+
+	if pnum!=""{
+		pn,err=strconv.Atoi(pnum)
+	}else{
+		pn=1
+	}
+	if pcount!=""{
+		pc,err=strconv.Atoi(pcount)
+	}else{
+		pc=10
+	}
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	u,PageNum,PageCount,PageSum,PageMax,result:=user.GetFans(uid,pn,pc)
 
 	//查询失败 返回错误信息 成功 返回成功信息和粉丝详细信息
 	if result!="" {
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","context":u})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","pageNum":PageNum,"pageCount":PageCount,"pageSum":PageSum,"pageMax":PageMax,"context":u})
 	}
 
 
@@ -295,7 +315,7 @@ func GetFollows(c *gin.Context){
 	pnum:=c.Query("PageNum")
 	pcount:=c.Query("PageCount")
 
-
+	//分页
 	if pnum!="" {
 		pagenum,err=strconv.Atoi(pnum)
 	}else{
@@ -399,11 +419,30 @@ func AddFavorite(c *gin.Context){
 //查看收藏的所有文章 根据收藏人id  !!(现在只查询收藏表 还没有关联查询文章详细信息)
 func GetFavoriteByID(c *gin.Context){
 
+	var pn,pc int
+	var err error
+
 	uid:=c.Query("Uid")
+	pnum:=c.Query("PageNum")
+	pcount:=c.Query("PageCount")
 
-	favoritelist:=user.GetFavoriteByID(uid)
+	if pnum!="" {
+		pn,err=strconv.Atoi(pnum)
+	}else{
+		pn=1
+	}
+	if pcount!="" {
+		pc,err=strconv.Atoi(pcount)
+	}else{
+		pc=10
+	}
+	if err!=nil {
+		log.Fatal(err)
+	}
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","context":favoritelist})
+	favoritelist,PageNum,PageCount,PageSum,PageMax:=user.GetFavoriteByID(uid,pn,pc)
+
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","pageNum":PageNum,"pageCount":PageCount,"pageSum":PageSum,"pageMax":PageMax,"context":favoritelist})
 
 
 }
@@ -469,12 +508,31 @@ func AddBrowseHistory(c *gin.Context){
 //根据用户id查看浏览记录
 func GetBrowseHistory(c *gin.Context) {
 
+	var pn,pc int
+	var err error
+
 	uid:=c.Query("User_UID")
+	pnum:=c.Query("PageNum")
+	pcount:=c.Query("PageCount")
 
-	list:=user.GetBrowseHistory(uid)
+	if pnum!="" {
+		pn,err=strconv.Atoi(pnum)
+	}else{
+		pn=1
+	}
+	if pcount!="" {
+		pc,err=strconv.Atoi(pcount)
+	}else{
+		pc=10
+	}
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	list,PageNum,PageCount,PageSum,PageMax:=user.GetBrowseHistory(uid,pn,pc)
 
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","context":list})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","pageNum":PageNum,"pageCount":PageCount,"pageSum":PageSum,"pageMax":PageMax,"context":list})
 
 
 }
