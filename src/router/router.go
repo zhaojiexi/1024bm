@@ -30,7 +30,7 @@ func SetUserRouter(router *gin.Engine) *gin.Engine {
 		userRoutert.DELETE("user/delfollow",DelFollow)		//http://127.0.0.1:8888/api/v1/user/delfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a333679bfb1481ee4fe16a4
 		userRoutert.POST("user/addfavorite",AddFavorite)		//新增收藏 	http://0.0.0.0:8000/user/addfollow?User_UID=5a2a35f2bfb1481f9cf54c7a&Following_UID=5a2a4b61bfb1481734be3ae1&User_name=test&Following_Name=ftest
 		userRoutert.GET("user/favoritebyid",GetFavoriteByID)	//查看收藏文章 	http://0.0.0.0:8000/user/favoritebyid?Uid=5a2a35f2bfb1481f9cf54c7a
-		userRoutert.GET("user/delfavorite",DelFavorite)	////查看收藏文章 	http://127.0.0.1:8888/api/v1/user/delfavorite?User_UID=5a2a35f2bfb1481f9cf54c7a&Article_ID=5a2a35f2bfb1481f9cf54c7a
+		userRoutert.DELETE("user/delfavorite",DelFavorite)	//// 删除 	http://127.0.0.1:8888/api/v1/user/delfavorite?User_UID=5a2a35f2bfb1481f9cf54c7a&Article_ID=5a2a35f2bfb1481f9cf54c7a
 		userRoutert.POST("user/addbrowsehistory",AddBrowseHistory)	//http://127.0.0.1:8888/api/v1/user/addbrowsehistory?User_UID=5a3366aabfb1481940f4c672&Article_ID=5a3366aabfb1481940f4c672&Article_Title=test&Article_Author=zuozhe&Author_Picture=photo&Article_Time=2017-12-15 15:25:00&Created=2017-12-15 15:25:00
 		userRoutert.GET("user/getbrowsehistory",GetBrowseHistory)	//查看浏览记录http://127.0.0.1:8888/api/v1/user/getbrowsehistory?User_UID=5a3366aabfb1481940f4c672
 		userRoutert.DELETE("user/delbrowsehistory",DelBrowseHistory)
@@ -79,7 +79,7 @@ func GetUserInfo(c *gin.Context){
 	if ur==nil {
 		result=gin.H{"code":400,"msg":1,"start":0,"result":r}
 	}else {
-		result=gin.H{"code":200,"msg":1,"start":1,"result":"success","UserInfo":ur}
+		result=gin.H{"code":200,"msg":1,"start":1,"result":"success","context":ur}
 	}
 
 	c.JSON(http.StatusOK,result)
@@ -114,12 +114,37 @@ func UserLogin(c *gin.Context){
 //获取用户列表
 func GetUsers(c *gin.Context){
 
+	num:=c.Query("PageNum")
+	count:=c.Query("PageCount")
+
+	//如果没传 则赋默认值
+	var pn,pc int
+	var err error
+
+	if num!="" {
+		pn,err=strconv.Atoi(num)
+	}else {
+		pn=1
+	}
+	if count!="" {
+		pc,err=strconv.Atoi(count)
+	}else{
+		pc=10
+	}
 
 
-	ulist,_:=user.GetUsers(5,5)
+	if err!=nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("pc,%s,pc,%s\n",pn,pc)
+	ulist,PageNum,PageCount,PageSum,PageMax,_:=user.GetUsers(pn,pc)
 
+	fmt.Println("页数",PageNum)
+	fmt.Println("每页显示几行",PageCount)
+	fmt.Println("总共几条数据",PageSum)
+	fmt.Println("最大页数",PageMax)
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","UserList":ulist})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","pageNum":PageNum,"pageCount":PageCount,"pageSum":PageSum,"pageMax":PageMax,"context":ulist})
 
 
 }
@@ -210,7 +235,7 @@ func GetFans(c *gin.Context){
 	if result!="" {
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","UserList":u})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","context":u})
 	}
 
 
@@ -261,14 +286,39 @@ func AddFollow(c *gin.Context){
 
 //查看所有关注 根据用户id查看自己的所有关注
 func GetFollows(c *gin.Context){
+	var err error
+	var pagenum,pagecount int
+
+
 
 	uid:=c.Query("Uid")
-	ulist,result:=user.GetFollows(uid)
+	pnum:=c.Query("PageNum")
+	pcount:=c.Query("PageCount")
+
+
+	if pnum!="" {
+		pagenum,err=strconv.Atoi(pnum)
+	}else{
+		pagenum=1
+	}
+
+	if pcount!="" {
+		pagecount,err=strconv.Atoi(pcount)
+	}else{
+		pagecount=10
+	}
+
+	if	err!=nil{
+		log.Fatal(err)
+	}
+
+
+	ulist,result,PageNum,PageCount,PageSum,PageMax:=user.GetFollows(uid,pagenum,pagecount)
 
 	if result!="" {
 		c.JSON(http.StatusOK,gin.H{"code":400,"msg":1,"start":0,"result":result})
 	}else{
-		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"成功","UserList":ulist})
+		c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","pageNum":PageNum,"pageCount":PageCount,"pageSum":PageSum,"pageMax":PageMax,"context":ulist})
 	}
 
 
@@ -353,7 +403,7 @@ func GetFavoriteByID(c *gin.Context){
 
 	favoritelist:=user.GetFavoriteByID(uid)
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","list":favoritelist})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","context":favoritelist})
 
 
 }
@@ -424,7 +474,7 @@ func GetBrowseHistory(c *gin.Context) {
 	list:=user.GetBrowseHistory(uid)
 
 
-	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","list":list})
+	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","context":list})
 
 
 }

@@ -9,6 +9,8 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"flag"
 	"fmt"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 //redis缓存整个用户信息
@@ -42,7 +44,7 @@ func AddSession(user *User){
 		fmt.Println(redis.Args{sym}.AddFlat(row))
 	}
 	//20分钟缓存时间	//根据上面存入的 sym：uid 设置缓存时间
-	value, err := conn.Do("EXPIRE", user.Uid,1800)
+	value, err := conn.Do("EXPIRE", user.Uid.Hex(),1800)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -76,7 +78,7 @@ func UserRegister(name,phone,password string) (user1 *User,result string) {
 
 	err := com.GetCollection("User",query)
 	if err != nil{
-		log.Fatalf("User-UserRegister时报错: %s\n", err)
+		log.Fatalf("User-UserRegister时报错0: %s\n", err)
 	}
 	//如果存在 直接返回
 	if len(ulist)>0 {
@@ -93,7 +95,7 @@ func UserRegister(name,phone,password string) (user1 *User,result string) {
 
 	err = com.GetCollection("User",query)
 	if err != nil{
-		log.Fatalf("User-UserRegister时报错: %s\n", err)
+		log.Fatalf("User-UserRegister时报错1: %s\n", err)
 	}
 	//如果存在 直接返回
 	if len(ulist)>0 {
@@ -103,10 +105,11 @@ func UserRegister(name,phone,password string) (user1 *User,result string) {
 
 
 	var user *User = new(User)
+	user.ID				=bson.NewObjectId()
 	user.Uid          = bson.NewObjectId()
 	user.Name    	  = name
 	user.Phone    	  = phone
-	user.PassWord     = password
+	//user.PassWord     = password
 	user.RegisterDate = time.Now()
 	user.Slug		  =user.Uid.Hex()+name
 	user.Location		=""
@@ -123,13 +126,17 @@ func UserRegister(name,phone,password string) (user1 *User,result string) {
 	user.Interest  =nil
 	user.IsEnabled	=1	//默认可用
 
+	M5:=md5.New()
+	M5.Write([]byte(password))
+	user.PassWord =hex.EncodeToString(M5.Sum(nil))
+
 	query = func(c *mgo.Collection) (error) {
 		return c.Insert(user)
 	}
 
 	err = com.GetCollection("User",query)
 	if err != nil{
-		log.Fatalf("User-UserRegister时报错: %s\n", err)
+		log.Fatalf("User-UserRegister时报错2: %s\n", err)
 	}
 	//注册成功 放入缓存
 	AddSession(user)
@@ -153,11 +160,16 @@ func UserLogin(phone,password string)(user *User,s string){
 	if len(users)<1{
 		return nil,"该手机尚未注册"
 	}
+	//md5 校验
+	m5:=md5.New()
+	m5.Write([]byte(password))
+	hex.EncodeToString(m5.Sum(nil))
+	m5pwd:=hex.EncodeToString(m5.Sum(nil))
 
 
     //校验密码准确性
 	query = func(c *mgo.Collection) (error) {
-		return c.Find(bson.M{"Phone":phone,"PassWord":password,"IsEnabled":1}).All(&users)
+		return c.Find(bson.M{"Phone":phone,"PassWord":m5pwd,"IsEnabled":1}).All(&users)
 
 	}
 
@@ -207,27 +219,48 @@ func GetUserInfo(uid string)(user *User,result string){
 
 //查找所有用户信息
 
-func GetUsers(pagenum,pagemax int)([]User,error){
+func GetUsers(pagenum,pagecount int)([]User,int,int,int,int,error){
 
 	var users []User
 
-	var ts []Test
 
-	//
 	query := func(c *mgo.Collection) (error) {
-		return c.Find(nil).Skip(pagenum*pagenum).Limit(pagenum).All(&ts)
+		return c.Find(bson.M{"IsEnabled":1}).All(&users)
 	}
 
-	err := com.GetCollection("test",query)
+	err := com.GetCollection("User",query)
 	if err != nil{
 		log.Fatalf("getUsers: %s\n", err)
 	}
-	fmt.Println ("总条数:",len(users))
-	for k,v:=range ts  {
-		fmt.Println(k,v)
+
+	pagesum:=len(users)
+	//计算最大页数
+	PageMax:=pagesum/pagecount
+	//取模 如果不能整除 最大页数+1
+	if pagesum%pagecount!=0 {
+		PageMax++
+	}
+	//如果输入的页数大于最大页数 则=最大页数
+	if pagenum>PageMax {
+		pagenum=PageMax
+	}
+	//如果输入的小于最大页数 则=1 第一页
+	if pagenum<1 {
+		pagenum=1
+	}
+	//
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"IsEnabled":1}).Skip((pagenum-1)*pagecount).Limit(pagecount).All(&users)
 	}
 
-	return users,err
+	err = com.GetCollection("User",query)
+	if err != nil{
+		log.Fatalf("getUsers: %s\n", err)
+	}
+
+
+		//pagenum=页数  pagecount=每页几条 len(users)：总条数 PageMax：最大页数
+	return users,pagenum,pagecount,pagesum,PageMax,err
 
 
 }
@@ -436,7 +469,7 @@ func AddFollow (fo *Follow)string{
 		return "不能重复关注"
 	}
 
-
+	fo.ID=bson.NewObjectId()
 
 	query = func(c *mgo.Collection) (error) {
 		return c.Insert(&fo)
@@ -451,7 +484,7 @@ func AddFollow (fo *Follow)string{
 }
 
 //根据uid获取所有关注的用户信息
-func GetFollows(uid string)([]User,string){
+func GetFollows(uid string,pagenum,pagecount int)([]User,string,int,int,int,int){
 
 	var follows []Follow
 	var users []User
@@ -465,9 +498,10 @@ func GetFollows(uid string)([]User,string){
 		log.Fatalf("Follows: %s\n", err)
 	}
 	if len(users)<1 {
-		return nil,"用户不存在"
+		return nil,"用户不存在",0,0,0,0
 	}
 
+	//查询总条数
 	query = func(c *mgo.Collection) (error) {
 		return c.Find(bson.M{"User_UID":bjectid,"IsEnabled":1}).All(&follows)
 	}
@@ -477,6 +511,39 @@ func GetFollows(uid string)([]User,string){
 		log.Fatalf("Follows: %s\n", err)
 	}
 
+
+	pageSum:=len(follows)
+	fmt.Println("总条数：",pageSum)
+
+	//最大页数
+	PageMax:=pageSum/pagenum
+
+	//如果不能整除 最大页数+1
+	if pageSum%pagenum!=0 {
+		PageMax++
+	}
+	if pagenum> PageMax{
+		pagenum=PageMax
+	}
+	if pagenum<1 {
+		pagenum=1
+	}
+
+
+
+
+
+	//分页查询
+	query = func(c *mgo.Collection) (error) {
+		return c.Find(bson.M{"User_UID":bjectid,"IsEnabled":1}).Skip((pagenum-1)*pagecount).Limit(pagecount).All(&follows)
+	}
+
+	err = com.GetCollection("Follow",query)
+	if err != nil{
+		log.Fatalf("Follows: %s\n", err)
+	}
+
+	fmt.Println("len:",len(follows))
 	var user2 []User
 
 	//查询关注的用户详细信息
@@ -497,7 +564,7 @@ func GetFollows(uid string)([]User,string){
 	}
 
 
-	return user2,""
+	return user2,"",pagenum,pagecount,pageSum,PageMax
 
 
 }
