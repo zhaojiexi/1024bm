@@ -34,9 +34,9 @@ type Article struct {
 	Source_url string `json:"Source_url" bson:"Source_url"`	//源网址（2 转载 3 翻译）    如：www.cnblog.com/java/1234123123
 	Source_domain string `json:"Source_domain" bson:"Source_domain"`	//源域名（2 转载 3 翻译）    如：www.cnblog.com
 	Source_chinese string `json:"Source_chinese" bson:"Source_chinese"`	//源中文（2 转载 3 翻译）    如：博客园
-	CategoryParent_ID string `json:"CategoryParent_ID" bson:"CategoryParent_ID"` //(外键)	父分类id
+	CategoryParent_ID int64 `json:"CategoryParent_ID" bson:"CategoryParent_ID"` //(外键)	父分类id
 	CategoryParent string `json:"CategoryParent" bson:"CategoryParent"`	//父分类名称
-	CategorySub_ID string `json:"CategorySub_ID" bson:"CategorySub_ID"` //(外键)	子分类id
+	CategorySub_ID int64 `json:"CategorySub_ID" bson:"CategorySub_ID"` //(外键)	子分类id
 	CategorySub string `json:"CategorySub" bson:"CategorySub"`	//子分类名
 	Tags []string	`json:"Tags" bson:"Tags"`//标签 【数组】如：tags:["java","sprint","git"],
 	Like_count	int64 `json:"Like_count" bson:"Like_count"`//喜欢数,默认0
@@ -57,8 +57,8 @@ type Comments struct{
 	Created time.Time `json:"Created" bson:"Created"`//	评论时间
 	Like_count int64 `json:"Like_count" bson:"Like_count"`//	评论点赞数
 	Replied_count int64 `Replied_count:"_ID" bson:"Replied_count"`//	回复评论总数
-	Replieds []string `json:"_ID" bson:"_id"`//	"评论的回复数组
-	IsEnabled int64 `json:"_ID" bson:"_id"`//	是否可用 （1可用 0不可用）
+	Replieds []Replied `json:"Replieds" bson:"Replieds"`//	"评论的回复数组
+	IsEnabled int64 `json:"IsEnabled" bson:"IsEnabled"`//	是否可用 （1可用 0不可用）
 }
 
 type Replied struct {

@@ -139,10 +139,7 @@ func GetUsers(c *gin.Context){
 	fmt.Printf("pc,%s,pc,%s\n",pn,pc)
 	ulist,PageNum,PageCount,PageSum,PageMax,_:=user.GetUsers(pn,pc)
 
-	fmt.Println("页数",PageNum)
-	fmt.Println("每页显示几行",PageCount)
-	fmt.Println("总共几条数据",PageSum)
-	fmt.Println("最大页数",PageMax)
+
 
 	c.JSON(http.StatusOK,gin.H{"code":200,"msg":1,"start":1,"result":"success","pageNum":PageNum,"pageCount":PageCount,"pageSum":PageSum,"pageMax":PageMax,"context":ulist})
 
